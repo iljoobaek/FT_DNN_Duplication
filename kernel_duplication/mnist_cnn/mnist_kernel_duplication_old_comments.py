@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
-# from tensorboardX import SummaryWriter
+from tensorboardX import SummaryWriter
 import os
 import time
 
@@ -15,7 +15,7 @@ class SimpleCNN(nn.Module):
     """
     Model definition
     """
-    def __init__(self, num_classes=10, inp_size=28, c_dim=1, error=0, duplicate_index=None, attention_mode=False):
+    def __init__(self, num_classes=10, inp_size=28, c_dim=1, error=0, duplicate_index=None):
         super().__init__()
         self.num_classes = num_classes
         self.error = error
@@ -27,8 +27,6 @@ class SimpleCNN(nn.Module):
         self.nonlinear = nn.ReLU()
         self.pool1 = nn.AvgPool2d(2, 2)
         self.pool2 = nn.AvgPool2d(2, 2)
-        self.attention_mode = attention_mode
-        self.evaluate_origin = False
 
         self.flat_dim = inp_size*inp_size*4
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'relu'))
@@ -50,23 +48,29 @@ class SimpleCNN(nn.Module):
         '''
             Simulate error injection
         '''
-
         if self.error:
-            if self.attention_mode:
-                x_copy = x.clone()
-                x = error_injection(x, self.error, self.duplicate_index, is_origin=False)
-                x = (x+x_copy)/2
-            else:
-                x = error_injection(x, self.error, None, is_origin=True)
+
+            x_copy = x.clone()
+            x = error_injection(x, self.error, self.duplicate_index)  # duplicate_index = [1 0 2]
+
+            # x_copy: feature map without error
+            # x: feature map with error
+            # duplicate 20: final (15 + 0)/2 = 7.5
+            # un-duplicated 12: final 0
+
+
+
+            x = (x+x_copy)/2
+            pass
+
         else:
-            if self.attention_mode:
-                x = x.permute(0, 2, 3, 1)
-                x = self.fc3(x)
-                x = nn.Tanh()(x)
-                x = self.fc4(x)
-                x = x.permute(0, 3, 1, 2)
+            x = x.permute(0, 2, 3, 1)  # N * C * W * H  ->  N * W * H * C
+            x = self.fc3(x)   # from 32 to 20
+            x = self.fc4(x)   # from 20 back to 32
+            x = x.permute(0, 3, 1, 2)  # N * W * H * C ->  N * C * W * H
 
         x = self.pool1(x)
+
         x = self.conv2(x)
         x = self.nonlinear(x)
         x = self.pool2(x)
@@ -74,8 +78,7 @@ class SimpleCNN(nn.Module):
         flat_x = x.view(N, self.flat_dim)
         out = self.fc1(flat_x)
         out = self.fc2(out)
-        return out
-
+        return out  # N* 10
 
 
 def get_fc(inp_dim, out_dim, non_linear='relu'):
@@ -99,28 +102,46 @@ def get_fc(inp_dim, out_dim, non_linear='relu'):
     return layers
 
 
-def error_injection(x, error_rate, duplicate_index, is_origin):
+def error_injection(x, error_rate, duplicate_index):
     """
         Simulate Error Injection.
         :param x: tensor, input tensor (in our case CNN feature map)
         :param error_rate: double, rate of errors
         :return: tensor, modified tensor with error injected
     """
-    origin_shape = x.shape
-    if not is_origin:
-        total_dim = x[:, :20, :, :].flatten().shape[0]
-    else:
-        total_dim = x[:, :32, :, :].flatten().shape[0]
-        duplicate_index = torch.arange(32).type(torch.long).to(device)
-    index = torch.arange(32).type(torch.long).to(device)
+    origin_shape = x.shape  # N * 32 * W * H
+    total_dim = x[:, :20, :, :].flatten().shape[0]    # total_dim = N * 20 * W * H
+    index = torch.arange(32).type(torch.long).to(device)  # index: 0 1 2... 31
     final = torch.stack((duplicate_index, index), axis=0)
+    # 0 1
+    # 1 0
+    # 2 2
     final = final.sort(dim=1)
     reverse_index = final.indices[0]
 
-    x = x[:,duplicate_index,:,:].flatten()
+    # 0
+    # 1
+    # 2
+
+
+    x = x[:,duplicate_index,:,:].flatten()  # 0 1 2 -> 1 0 2
+
+    # 1
+    # 0
+    # 2
+
+    # 32*10
+    # 20*10:
+    # 51 2 31... 199
     random_index = torch.randperm(total_dim)[:int(total_dim*error_rate)]
+
+    # Error injection
     x[random_index] = 0
     x = x.reshape(origin_shape)
+    # 1  0
+    # 0  1
+    # 2  2
+
     x = x[:, reverse_index, :, :]
 
     return x
@@ -128,7 +149,7 @@ def error_injection(x, error_rate, duplicate_index, is_origin):
 
 def main():
     # 1. load dataset and build dataloader
-    model_dir = "./model/"
+    model_dir = "../model/RA1/"
     train_loader = torch.utils.data.DataLoader(
         datasets.FashionMNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
@@ -143,24 +164,15 @@ def main():
                        ])),
         batch_size=args.test_batch_size, shuffle=True)
 
-    if args.evaluate:
-        evaluate(args.error_rate, device, test_loader)
-        return
-
     # 2. define the model, and optimizer.
-    if args.run_original:
-        model = SimpleCNN().to(device)
-
-    else:
-        PATH = "./model/original/epoch-4.pt"
-        model = SimpleCNN().to(device)
-        model.load_state_dict(torch.load(PATH), strict=False)
-        model.attention_mode = True
-        added_layers = {"fc3.weight", "fc4.weight"}
-        for name, param in model.named_parameters():
-            if (name in added_layers):
-                continue
-            param.requires_grad = False
+    PATH = "../model/RA/epoch-4.pt"
+    model = SimpleCNN().to(device)
+    model.load_state_dict(torch.load(PATH), strict=False)
+    added_layers = {"fc3.weight", "fc4.weight"}
+    for name, param in model.named_parameters():
+        if (name in added_layers):
+            continue
+        param.requires_grad = False
 
     model.to(device)
     model.train()
@@ -176,7 +188,7 @@ def main():
             # Forward pass
             output = model(data)
             # Calculate the loss
-            loss = nn.CrossEntropyLoss()(output, target)
+            loss = F.cross_entropy(output, target)
             # Calculate gradient w.r.t the loss
             loss.backward()
             # Optimizer takes one step
@@ -190,39 +202,40 @@ def main():
             # Validation iteration
             if cnt % args.val_every == 0:
                 test_loss, test_acc = test(model, device, test_loader)
+
                 model.train()
             cnt += 1
         scheduler.step()
-        if args.run_original:
-            torch.save(model.state_dict(), os.path.join(model_dir, 'original/epoch-{}.pt'.format(epoch)))
-        else:
-            torch.save(model.state_dict(), os.path.join(model_dir, 'attention/epoch-{}.pt'.format(epoch)))
+        torch.save(model.state_dict(), os.path.join(model_dir, 'epoch-{}.pt'.format(epoch)))
 
 
-def evaluate(error_rate, device, test_loader):
-    print("Evaluate model with error")
-    PATH = "./model/attention/epoch-4.pt"
-
-    model = SimpleCNN(error=error_rate).to(device)
+    PATH = "../model/RA1/epoch-4.pt"
+    model = SimpleCNN(error=0.95).to(device)
     model.load_state_dict(torch.load(PATH), strict=False)
 
-    print("Evaluating model without attention...")
-    # evaluate the original model without attention
-    model.evaluate_origin = True
-    test_loss, test_acc = test(model, device, test_loader)
-    print("final acc without attention: ", test_acc, "\n\n\n")
+    index = torch.arange(32).type(torch.float).to(device)  # 1,2,3,4,....32
 
-    print("Evaluating model with attention...")
-    # Change to evaluate the model with attention
-    index = torch.arange(32).type(torch.float).to(device)
-    tmp = torch.sum(model.fc3.weight, axis=0)
+    # 20 * 32  ->  1 * 32:  10 20 30 ... 100
+    # 2*3:
+    # 5 7 9
+    # 1 2 3
+    # 4 5 6
+
+    tmp = torch.sum(model.fc3.weight, axis=0)  # 2 * 3  ->  1 * 3:  10 5 20
     final = torch.stack((tmp, index), axis=0)
+
+    # final: # 0 10    ->   1 5
+             # 1 5     ->   0 10
+             # 2 20    ->   2 20
     final = final.sort(dim=1)
-    model.duplicate_index = final.indices[0]
-    model.evaluate_origin = False
-    model.attention_mode = True
+
+
+    model.duplicate_index = final.indices[0]  # 1 0 2
+
+
+
     test_loss, test_acc = test(model, device, test_loader)
-    print("final acc with attention: ", test_acc)
+    print("final acc: ", test_acc)
 
 
 
@@ -234,7 +247,9 @@ def test(model, device, test_loader):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
+
             output = model(data)
+
             test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -248,16 +263,6 @@ def test(model, device, test_loader):
     return test_loss, correct / len(test_loader.dataset)
 
 
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
 
 def parse_args():
     """
@@ -267,12 +272,6 @@ def parse_args():
     # config for dataset
     parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--run_original', default=True, type=str2bool,
-					help='train the original model')
-    parser.add_argument('--evaluate', default=False, type=str2bool,
-					help='Evaluate the model')
-    parser.add_argument('--error_rate', type=float, default=0, metavar='M',
-                        help='error_rate')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=5, metavar='N',
