@@ -1,4 +1,4 @@
-Create weights directory:
+create weights directory:
 mkdir weights
 cd weights
 mkdir original
@@ -12,7 +12,7 @@ Train the attention model:
 python train.py --run_original False --epochs 10
 
 Get evaluation results for the original model:
-python eval.py --attention_mode True --error_rate 0.95 --touch_layer_index 1
+python eval.py --attention_mode False --error_rate 0.95 --touch_layer_index 1
 
 Get evaluation results for the attention model: 
-python eval.py --attention_mode False --error_rate 0.95 --touch_layer_index 1
+python eval.py --attention_mode True --error_rate 0.95 --touch_layer_index 1
