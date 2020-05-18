@@ -1,4 +1,4 @@
-python3.5 origin_mnist.py
+python origin_mnist.py
 
 # create the "model" folder to save the model
 mkdir model
@@ -6,14 +6,7 @@ cd model
 mkdir original
 mkdir attention
 
-# Train the original model without attention: 
-python3.5 mnist_kernel_duplication.py --run_original True
+Train the original model: python mnist_error.py --run_original True
+Train the attention model: python mnist_error.py --run_original False
 
-# Train the model with attention : 
-python3.5 mnist_kernel_duplication.py --run_original False
-
-# After training, evaluate model's accuracy with vs without attention: 
-# change the error rate every time.
-
-python3.5 mnist_kernel_duplication.py --evaluate True --error_rate 0.95
-
+Get evaluation results for both model (with and without attention): python mnist_error.py --evaluate True --error_rate 0.95
