@@ -57,7 +57,7 @@ class SimpleCNN(nn.Module):
             duplicate_index = torch.arange(32).type(torch.long).to(device)
         index = torch.arange(32).type(torch.long).to(device)
         final = torch.stack((duplicate_index, index), axis=0)
-        final = final.sort(dim=1, descending=True)
+        final = final.sort(dim=1)
         reverse_index = final.indices[0]
 
         x = x[:, duplicate_index, :, :].flatten()
@@ -243,7 +243,7 @@ def evaluate(args, error_rate, device, test_loader):
     index = torch.arange(32).type(torch.float).to(device)
     tmp = torch.sum(model.fc3.weight, axis=0)
     final = torch.stack((tmp, index), axis=0)
-    final = final.sort(dim=1)
+    final = final.sort(dim=1, descending=True)
     model.duplicate_index = final.indices[0]
     model.evaluate_origin = False
     model.attention_mode = True
