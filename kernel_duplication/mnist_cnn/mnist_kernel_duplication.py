@@ -57,7 +57,7 @@ class SimpleCNN(nn.Module):
             duplicate_index = torch.arange(32).type(torch.long).to(device)
         index = torch.arange(32).type(torch.long).to(device)
         final = torch.stack((duplicate_index, index), axis=0)
-        final = final.sort(dim=1)
+        final = final.sort(dim=1, descending=True)
         reverse_index = final.indices[0]
 
         x = x[:, duplicate_index, :, :].flatten()

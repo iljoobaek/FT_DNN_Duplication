@@ -452,7 +452,7 @@ if __name__ == '__main__':
             tmp = torch.sum(layer_mp[k], axis=0)
             print(layer_mp[k].shape)
             final = torch.stack((tmp, index), axis=0)
-            final = final.sort(dim=1)
+            final = final.sort(dim=1, descending=True)
             if k == 1:
                 net.duplicate_index1 = final.indices[0]
             elif k == 2:
