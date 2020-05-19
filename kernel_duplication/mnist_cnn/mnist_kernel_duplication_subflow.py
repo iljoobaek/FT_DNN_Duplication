@@ -15,7 +15,7 @@ class SimpleCNN(nn.Module):
     """
     Model definition
     """
-    def __init__(self, num_classes=10, inp_size=28, c_dim=1, error=0, duplicate_index=None, attention_mode=False):
+    def __init__(self, num_classes=10, inp_size=28, c_dim=1, error=0, num_duplication=5, duplicate_index=None, attention_mode=False, error_spread=False):
         super().__init__()
         self.num_classes = num_classes
         self.error = error
@@ -31,6 +31,8 @@ class SimpleCNN(nn.Module):
         self.pool2 = nn.AvgPool2d(2, 2)
         self.attention_mode = attention_mode
         self.evaluate_origin = False
+        self.num_duplication = num_duplication
+        self.error_spread = error_spread
 
         self.flat_dim = inp_size*inp_size*4
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'relu'))
@@ -38,6 +40,53 @@ class SimpleCNN(nn.Module):
         self.fc3 = nn.Linear(32, 20, bias=False)
         self.fc4 = nn.Linear(20, 32, bias=False)
 
+    def error_injection(self, x, error_rate, duplicate_index, is_origin):
+        """
+            Simulate Error Injection.
+            :param x: tensor, input tensor (in our case CNN feature map)
+            :param error_rate: double, rate of errors
+            :return: tensor, modified tensor with error injected
+        """
+        origin_shape = x.shape
+        if not is_origin:
+            total_dim = x[:, :self.num_duplication, :, :].flatten().shape[0]
+        else:
+            total_dim = x[:, :32, :, :].flatten().shape[0]
+            duplicate_index = torch.arange(32).type(torch.long).to(device)
+        index = torch.arange(32).type(torch.long).to(device)
+        final = torch.stack((duplicate_index, index), dim=0)
+        final = final.sort(dim=1)
+        reverse_index = final.indices[0]
+
+        x = x[:, duplicate_index, :, :].flatten()
+        random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+        x[random_index] = 0
+        x = x.reshape(origin_shape)
+        x = x[:, reverse_index, :, :]
+
+        return x
+
+    def error_injection_new(self, x, error_rate):
+        """
+            Simulate Error Injection.
+            :param x: tensor, input tensor (in our case CNN feature map)
+            :param error_rate: double, rate of errors
+            :return: tensor, modified tensor with error injected
+        """
+        origin_shape = x.shape
+        total_dim = x.flatten().shape[0]
+
+        x = x.flatten()
+        random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+        x[random_index] = 0
+        x = x.reshape(origin_shape)
+
+        return x
+
+    def duplication(self, x_original, x_error, duplicate_index):
+        x_duplicate = x_error.clone()
+        x_duplicate[:, duplicate_index[:self.num_duplication], :, :] = x_original[:, duplicate_index[:self.num_duplication], :, :]
+        return x_duplicate
 
     def forward(self, x):
         """
@@ -64,10 +113,17 @@ class SimpleCNN(nn.Module):
         if self.error:
             if self.attention_mode:
                 x_copy = x.clone()
-                x = error_injection(x, self.error, self.duplicate_index, is_origin=False)
-                x = (x+x_copy)/2
+                if self.error_spread:
+                    x = self.error_injection(x, self.error / 2, self.duplicate_index, is_origin=False)
+                    x_copy = self.error_injection(x_copy, self.error / 2, self.duplicate_index, is_origin=False)
+                    x = (x + x_copy) / 2
+                else:
+                    x = self.error_injection_new(x, self.error)
+                    x_dup = self.duplication(x_copy, x, self.duplicate_index)
+                    x = (x + x_dup) / 2
+
             else:
-                x = error_injection(x, self.error, None, is_origin=True)
+                x = self.error_injection(x, self.error, None, is_origin=True)
         else:
             if self.attention_mode:
                 x = x.permute(0, 2, 3, 1)
@@ -163,42 +219,42 @@ def weight_sum_eval(model):
             # 64 32 3 3  (4D)
             # 64 32 (2D)
             # 32 (1D)
-            evaluation.append(weights[name + '.weight'].detach().clone().sum(dim=3).sum(dim=2).sum(dim=0))
+            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         elif isinstance(m, nn.Linear):
             names.append(name)
             # output input
-            evaluation.append(weights[name + '.weight'].detach().clone().sum(dim=0))
+            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=0))
     return evaluation, names
 
 
-def error_injection(x, error_rate, duplicate_index, is_origin):
-    """
-        Simulate Error Injection.
-        :param x: tensor, input tensor (in our case CNN feature map)
-        :param error_rate: double, rate of errors
-        :return: tensor, modified tensor with error injected
-    """
-    # duplicate_index 20
-    origin_shape = x.shape
-    if not is_origin:
-        total_dim = x[:, :20, :, :].flatten().shape[0]
-    else:
-        total_dim = x[:, :32, :, :].flatten().shape[0]
-        duplicate_index = torch.arange(32).type(torch.long).to(device)
-    index = torch.arange(32).type(torch.long).to(device)
-    final = torch.stack((duplicate_index, index), dim=0)
-    final = final.sort(dim=1)
-    reverse_index = final.indices[0]
-
-    # 12
-    # 20 (smallest)
-    x = x[:,duplicate_index,:,:].flatten() # from lower to higher
-    random_index = torch.randperm(total_dim)[:int(total_dim*error_rate)]
-    x[random_index] = 0
-    x = x.reshape(origin_shape)
-    x = x[:, reverse_index, :, :]
-
-    return x
+# def error_injection(x, error_rate, duplicate_index, is_origin):
+#     """
+#         Simulate Error Injection.
+#         :param x: tensor, input tensor (in our case CNN feature map)
+#         :param error_rate: double, rate of errors
+#         :return: tensor, modified tensor with error injected
+#     """
+#     # duplicate_index 20
+#     origin_shape = x.shape
+#     if not is_origin:
+#         total_dim = x[:, :20, :, :].flatten().shape[0]
+#     else:
+#         total_dim = x[:, :32, :, :].flatten().shape[0]
+#         duplicate_index = torch.arange(32).type(torch.long).to(device)
+#     index = torch.arange(32).type(torch.long).to(device)
+#     final = torch.stack((duplicate_index, index), dim=0)
+#     final = final.sort(dim=1)
+#     reverse_index = final.indices[0]
+#
+#     # 12
+#     # 20 (smallest)
+#     x = x[:,duplicate_index,:,:].flatten() # from lower to higher
+#     random_index = torch.randperm(total_dim)[:int(total_dim*error_rate)]
+#     x[random_index] = 0
+#     x = x.reshape(origin_shape)
+#     x = x[:, reverse_index, :, :]
+#
+#     return x
 
 
 def main():
@@ -287,13 +343,16 @@ def evaluate(error_rate, device, test_loader):
     test_loss, test_acc = test(model, device, test_loader)
     print("final acc without attention: ", test_acc, "\n\n\n")
 
+    model.num_duplication = 10
+
     print("Evaluating model with attention...")
     # Change to evaluate the model with attention
     index = torch.arange(32).type(torch.float).to(device)
     tmp = torch.sum(model.fc3.weight, dim=0)
     final = torch.stack((tmp, index), dim=0)
-    final = final.sort(dim=1) # smallest -> highest
+    final = final.sort(dim=1, descending=True) # smallest -> highest
     model.duplicate_index = final.indices[0]
+    print(model.duplicate_index)
     model.evaluate_origin = False
     model.attention_mode = True
     test_loss, test_acc = test(model, device, test_loader)
@@ -304,8 +363,9 @@ def evaluate(error_rate, device, test_loader):
     importance = cal_importance(model, test_loader)
     tmp = importance[1].sum(2).sum(1)
     final = torch.stack((tmp, index), dim=0)
-    final = final.sort(dim=1)
+    final = final.sort(dim=1, descending=True)
     model.duplicate_index = final.indices[0]
+    print(model.duplicate_index)
     model.evaluate_origin = False
     model.attention_mode = True
     test_loss, test_acc = test(model, device, test_loader)
@@ -316,8 +376,9 @@ def evaluate(error_rate, device, test_loader):
     weight_sum, _ = weight_sum_eval(model)
     tmp = weight_sum[1]
     final = torch.stack((tmp, index), dim=0)
-    final = final.sort(dim=1)
+    final = final.sort(dim=1, descending=True)
     model.duplicate_index = final.indices[0]
+    print(model.duplicate_index)
     model.evaluate_origin = False
     model.attention_mode = True
     test_loss, test_acc = test(model, device, test_loader)
