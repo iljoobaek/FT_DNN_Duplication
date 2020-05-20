@@ -4,6 +4,7 @@ cd weights
 mkdir original
 mkdir attension3
 
+# need to provide a way to download dataset
 
 Train the original model: 
 python train.py --run_original True --epochs 50

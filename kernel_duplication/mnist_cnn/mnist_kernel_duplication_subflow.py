@@ -37,7 +37,7 @@ class SimpleCNN(nn.Module):
         self.flat_dim = inp_size*inp_size*4
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'relu'))
         self.fc2 = nn.Sequential(*get_fc(128, num_classes, 'none'))
-        self.fc3 = nn.Linear(32, 20, bias=False)
+        self.fc3 = nn.Linear(32, 20, bias=False) # relate to num_duplication?
         self.fc4 = nn.Linear(20, 32, bias=False)
 
     def error_injection(self, x, error_rate, duplicate_index, is_origin):
@@ -175,12 +175,6 @@ def get_fc(inp_dim, out_dim, non_linear='relu'):
 def cal_importance(model, train_data):
     """
     s = o^2 * H
-
-    torch.Size([1, 28, 28])
-    torch.Size([32, 28, 28])
-    torch.Size([64, 14, 14])
-    torch.Size([128])
-    torch.Size([10])
 
     :param model:
     :param train_data:
