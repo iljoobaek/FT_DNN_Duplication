@@ -1,0 +1,19 @@
+#!/bin/bash
+python eval.py --attention_mode True --error_rate 0.7 --touch_layer_index 3
+python eval.py --attention_mode False --error_rate 0.7 --touch_layer_index 3
+python eval.py --attention_mode True --error_rate 0.5 --touch_layer_index 3
+python eval.py --attention_mode False --error_rate 0.5 --touch_layer_index 3
+python eval.py --attention_mode True --error_rate 0.2 --touch_layer_index 3
+python eval.py --attention_mode False --error_rate 0.2 --touch_layer_index 3
+python eval.py --attention_mode True --error_rate 0.7 --touch_layer_index 2
+python eval.py --attention_mode False --error_rate 0.7 --touch_layer_index 2
+python eval.py --attention_mode True --error_rate 0.5 --touch_layer_index 2
+python eval.py --attention_mode False --error_rate 0.5 --touch_layer_index 2
+python eval.py --attention_mode True --error_rate 0.2 --touch_layer_index 2
+python eval.py --attention_mode False --error_rate 0.2 --touch_layer_index 2
+python eval.py --attention_mode True --error_rate 0.7 --touch_layer_index 1
+python eval.py --attention_mode False --error_rate 0.7 --touch_layer_index 1
+python eval.py --attention_mode True --error_rate 0.5 --touch_layer_index 1
+python eval.py --attention_mode False --error_rate 0.5 --touch_layer_index 1
+python eval.py --attention_mode True --error_rate 0.2 --touch_layer_index 1
+python eval.py --attention_mode False --error_rate 0.2 --touch_layer_index 1
