@@ -66,7 +66,8 @@ class SSD(nn.Module):
 
         if phase == 'test':
             self.softmax = nn.Softmax(dim=-1)
-            self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
+            #self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
+            self.detect = Detect()
 
     def error_injection(self, x, error_rate, duplicate_index, is_origin, n):
         """
@@ -162,12 +163,15 @@ class SSD(nn.Module):
                         if self.attention_mode:
                             x_copy = x.clone()
                             if k==2:
-                                x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=64)
+                                x = self.error_injection_new(x, self.error)
+                                x_dup = self.duplication(x_copy, x, self.duplicate_index1)
                             elif k==5:
-                                x = self.error_injection(x, self.error, self.duplicate_index2, is_origin=False, n=128)
+                                x = self.error_injection_new(x, self.error)
+                                x_dup = self.duplication(x_copy, x, self.duplicate_index2)
                             else:
-                                x = self.error_injection(x, self.error, self.duplicate_index3, is_origin=False, n=256)
-                            x = (x + x_copy) / 2
+                                x = self.error_injection_new(x, self.error)
+                                x_dup = self.duplication(x_copy, x, self.duplicate_index3)
+                            x = (x + x_dup) / 2
                         else:
                             if k == 2:
                                 x = self.error_injection(x, self.error, None, is_origin=True, n=64)
@@ -196,6 +200,7 @@ class SSD(nn.Module):
 
         s = self.L2Norm(x)
         sources.append(s)
+        #print(len(self.output))
 
         # apply vgg up to fc7
         for k in range(23, len(self.vgg)):
@@ -216,13 +221,20 @@ class SSD(nn.Module):
         loc = torch.cat([o.view(o.size(0), -1) for o in loc], 1)
         conf = torch.cat([o.view(o.size(0), -1) for o in conf], 1)
         if self.phase == "test":
-            output = self.detect(
+            output = self.detect.apply(self.num_classes, 0, 200, 0.01, 0.45, 
                 loc.view(loc.size(0), -1, 4),                   # loc preds
                 self.softmax(conf.view(conf.size(0), -1,
                              self.num_classes)),                # conf preds
                 self.priors.type(type(x))                  # default boxes
                 # self.priors
             )
+            #output = self.detect(
+            #    loc.view(loc.size(0), -1, 4),                   # loc preds
+            #    self.softmax(conf.view(conf.size(0), -1,
+            #                 self.num_classes)),                # conf preds
+            #    self.priors.type(type(x))                  # default boxes
+                # self.priors
+            #)
         else:
             output = (
                 loc.view(loc.size(0), -1, 4),

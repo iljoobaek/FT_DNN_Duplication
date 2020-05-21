@@ -12,9 +12,12 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from data import VOC_ROOT, VOCAnnotationTransform, VOCDetection, BaseTransform
 from data import VOC_CLASSES as labelmap
+from data import *
+from layers.modules import MultiBoxLoss
 import torch.utils.data as data
 
-from ssd import build_ssd
+#from ssd import build_ssd
+from ssd_subflow_d2nn import build_ssd
 
 import sys
 import os
@@ -63,6 +66,8 @@ parser.add_argument('--error_rate', type=float, default=0, metavar='M',
                         help='error_rate')
 parser.add_argument('--touch_layer_index', default=1, type=int,
                     help='how many layers to add attention, maximum 3')
+parser.add_argument('--ft_type', default='attention', type=str,
+                    help='Type of kernel duplication')
 
 args = parser.parse_args()
 
@@ -191,6 +196,8 @@ def do_python_eval(output_dir='output', use_07=True):
         with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
             pickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
     print('Mean AP = {:.4f}'.format(np.mean(aps)))
+    with open("results", 'a') as f:
+        f.write(str(args.error_rate) + "|" + str(args.attention_mode) + "|" + args.ft_type + "|" + str(np.mean(aps)) + "\n")
     print('~~~~~~~~')
     print('Results:')
     for ap in aps:
@@ -416,8 +423,8 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
                                                                  copy=False)
             all_boxes[j][i] = cls_dets
 
-        print('im_detect: {:d}/{:d} {:.3f}s'.format(i + 1,
-                                                    num_images, detect_time))
+        #print('im_detect: {:d}/{:d} {:.3f}s'.format(i + 1,
+        #                                            num_images, detect_time))
 
     with open(det_file, 'wb') as f:
         pickle.dump(all_boxes, f, pickle.HIGHEST_PROTOCOL)
@@ -440,19 +447,30 @@ def cal_importance(model, train_data):
     :param train_data:
     :return:
     """
-
     importance_list = []
-    for batch_idx, (data, target) in enumerate(train_data):
-
+    cfg = voc
+    for batch_idx, (data, targets) in enumerate(train_data):
+        if args.cuda:
+            data = Variable(data.cuda())
+            targets = [Variable(ann.cuda(), volatile=True) for ann in targets]
+        else:
+            data = Variable(data)
+            targets = [Variable(ann, volatile=True) for ann in targets]
+        criterion = MultiBoxLoss(cfg['num_classes'], 0.5, True, 0, True, 3, 0.5,
+                             False, args.cuda)
         # forward pass
         output = model(data)
-        loss = F.cross_entropy(output, target)
+        loss_l, loss_c = criterion(output, targets)
+        loss = loss_l + loss_c
         loss.backward()
+        #loss = F.cross_entropy(output, target)
+        #loss.backward()
 
         for i, out in enumerate(model.output):
             hessian_approximate = out.grad ** 2  # grad^2 -> hessian
             importance = hessian_approximate * (out.detach().clone() ** 2)
             importance_list.append(importance.mean(dim=0))
+            #print(importance_list[-1].size())
 
         break
 
@@ -475,6 +493,7 @@ def weight_sum_eval(model):
             names.append(name)
             # output input
             evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=0))
+        #if evaluation: print(names[-1], type(m), evaluation[-1].size())
     return evaluation, names
 
 
@@ -485,9 +504,14 @@ if __name__ == '__main__':
     net.load_state_dict(torch.load(args.trained_model), strict=False)
 
     num_layer_mp = {1: 64, 2: 128, 3:256}
-    layer_id = {1: 2, 2: 5, 3: 10}
+    layer_id = {1: 2, 2: 3, 3: 5}
     layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
     index_mp = {1: net.duplicate_index1, 2: net.duplicate_index2, 3: net.duplicate_index3}
+
+    # load data
+    dataset = VOCDetection(args.voc_root, [('2007', set_type)],
+                           BaseTransform(300, dataset_mean),
+                           VOCAnnotationTransform())
 
     if not args.attention_mode:
         print("Evaluating model without duplication...")
@@ -496,16 +520,15 @@ if __name__ == '__main__':
         # Change to evaluate the model with attention
         device = torch.device("cuda")
 
-        # load data
-        dataset = VOCDetection(args.voc_root, [('2007', set_type)],
-                               BaseTransform(300, dataset_mean),
-                               VOCAnnotationTransform())
+        data_loader = data.DataLoader(dataset, 16,
+                                  shuffle=True, collate_fn=detection_collate,
+                                  pin_memory=True)
 
         if args.ft_type == "attention":
             for k in {1, 2, 3}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 tmp = torch.sum(layer_mp[k], axis=0)
-                print(layer_mp[k].shape)
+                #print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
                 if k == 1:
@@ -517,7 +540,10 @@ if __name__ == '__main__':
         elif args.ft_type == "importance":
             for k in {1, 2, 3}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
-                importance = cal_importance(net, dataset)
+                net_imp = build_ssd(args, 'train', 300, num_classes) 
+                net_imp.is_importance = True
+                importance = cal_importance(net_imp, data_loader)
+                net_imp.is_importance = False
                 tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
@@ -534,7 +560,7 @@ if __name__ == '__main__':
                 weight_sum, _ = weight_sum_eval(net)
                 # tmp = torch.sum(layer_mp[k], axis=0)
                 tmp = weight_sum[layer_id[k]]
-                # print(layer_mp[k].shape)
+                print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
                 if k == 1:
