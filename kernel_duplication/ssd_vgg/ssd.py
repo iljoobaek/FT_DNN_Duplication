@@ -73,10 +73,9 @@ class SSD(nn.Module):
         """
         device = torch.device("cuda")
         origin_shape = x.shape
-        if not is_origin:
-            total_dim = x[:, :32, :, :].flatten().shape[0]
-        else:
-            total_dim = x[:, :n, :, :].flatten().shape[0]
+        total_dim = x[:, :n, :, :].flatten().shape[0]
+        change_dim = x[:, :32, :, :].flatten().shape[0]
+        if is_origin:
             duplicate_index = torch.arange(n).type(torch.long).to(device)
         index = torch.arange(n).type(torch.long).to(device)
         final = torch.stack((duplicate_index, index), axis=0)
@@ -84,8 +83,15 @@ class SSD(nn.Module):
         reverse_index = final.indices[0]
 
         x = x[:, duplicate_index, :, :].flatten()
-        random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        x[random_index] = 0
+        x_duplicate = x.clone()
+        random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+        x[random_index1] = 0
+        if not is_origin:
+            random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
+            x_duplicate[random_index2] = 0
+            x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
+            x = (x+x_duplicate)/2
+
         x = x.reshape(origin_shape)
         x = x[:, reverse_index, :, :]
 
@@ -123,14 +129,12 @@ class SSD(nn.Module):
                 if k in self.touch_layers[self.args.touch_layer_index]:
                     if self.error:
                         if self.attention_mode:
-                            x_copy = x.clone()
-                            if k==2:
+                            if k == 2:
                                 x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=64)
-                            elif k==5:
+                            elif k == 5:
                                 x = self.error_injection(x, self.error, self.duplicate_index2, is_origin=False, n=128)
                             else:
                                 x = self.error_injection(x, self.error, self.duplicate_index3, is_origin=False, n=256)
-                            x = (x + x_copy) / 2
                         else:
                             if k == 2:
                                 x = self.error_injection(x, self.error, None, is_origin=True, n=64)
