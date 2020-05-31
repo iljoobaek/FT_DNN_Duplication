@@ -9,6 +9,12 @@
 0.98|False|attention|0.03179227986358274
 1.0|False|attention|-1.0
 
+x = (x + x_copy) / 2
+x_copy = x.clone()
+x_err = x.error_injection() 32 channels
+x_copy(top5, x_err)
+
+#duplication=5
 0.1|True|attention|0.6985413836605352
 0.3|True|attention|0.6973620899608944
 0.5|True|attention|0.6914899245657289
@@ -39,6 +45,8 @@
 0.96|True|d2nn|0.10869288926895579
 0.98|True|d2nn|0.020851023119000864
 1.0|True|d2nn|-0.19975262655187095
+
+#duplication=20
 0.1|True|attention|0.6988110867081628
 0.3|True|attention|0.6970485500835892
 0.5|True|attention|0.6926037476552447
@@ -69,6 +77,8 @@
 0.96|True|d2nn|0.4927747285598946
 0.98|True|d2nn|0.40919328095878205
 1.0|True|d2nn|0.3288933587843507
+
+#duplication=32
 0.1|True|attention|0.6986081704429645
 0.3|True|attention|0.6975921292722174
 0.5|True|attention|0.6953070255985574
