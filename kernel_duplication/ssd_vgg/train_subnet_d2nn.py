@@ -1,7 +1,10 @@
 from data import *
+from data.coco import *
+from data.voc0712 import *
+from data.config import *
 from utils.augmentations import SSDAugmentation
 from layers.modules import MultiBoxLoss
-from ssd_subflow_d2nn import build_ssd
+from ssd_subflow_d2nn_1 import build_ssd
 import os
 import sys
 import time
@@ -57,7 +60,9 @@ parser.add_argument('--visdom', default=True, type=str2bool,
                     help='Use visdom for loss visualization')
 parser.add_argument('--save_folder', default='weights/',
                     help='Directory for saving checkpoint models')
-parser.add_argument('--trained_model', default='weights/original/VOC.pth',
+# parser.add_argument('--trained_model', default='weights/original/VOC.pth',
+#                     type=str, help='Trained state_dict file path to open')
+parser.add_argument('--trained_model', default='weights/ssd300_mAP_77.43_v2.pth',
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--run_original', default=True, type=str2bool,
 					help='train the original model')
@@ -102,6 +107,10 @@ def train():
 
     ssd_net = build_ssd(args, 'train', cfg['min_dim'], cfg['num_classes'])
     net = ssd_net
+
+    # for name, m in ssd_net.named_parameters():
+    #     print(name)
+    # exit()
 
     if not args.run_original:
         net.load_state_dict(torch.load(args.trained_model), strict=False)

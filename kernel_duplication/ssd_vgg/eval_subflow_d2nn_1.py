@@ -17,7 +17,7 @@ from layers.modules import MultiBoxLoss
 import torch.utils.data as data
 
 #from ssd import build_ssd
-from ssd_subflow_d2nn import build_ssd
+from ssd_subflow_d2nn_1 import build_ssd
 
 import sys
 import os
@@ -199,7 +199,7 @@ def do_python_eval(output_dir='output', use_07=True):
         with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
             pickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
     print('Mean AP = {:.4f}'.format(np.mean(aps)))
-    with open("results", 'a') as f:
+    with open("results_1", 'a') as f:
         f.write(str(args.error_rate) + "|" + str(args.attention_mode) + "|" + args.ft_type + "|" + str(np.mean(aps)) + "\n")
     print('~~~~~~~~')
     print('Results:')

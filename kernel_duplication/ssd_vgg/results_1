@@ -1,0 +1,26 @@
+///////////////////////////////////////////////
+touch layer = 1, new saved weight: 77.43%, spread error, re-trained attention (10eps), attention 32->64
+
+#duplication=5
+0.1|True|attention|0.7742134516542432
+0.3|True|attention|0.7745666100065466
+0.5|True|attention|0.7692835081919516
+0.7|True|attention|0.7504450725800255
+0.9|True|attention|0.5323396241304855
+0.92|True|attention|0.42671739390660895
+0.94|True|attention|0.27484437928865185
+0.96|True|attention|0.12982102281735147
+0.98|True|attention|0.036669956187371684
+1.0|True|attention|-1.0
+
+#duplication=32
+0.1|True|attention|0.774048123461419
+0.3|True|attention|0.7731457228065802
+0.5|True|attention|0.7691690195954239
+0.7|True|attention|0.7556906557446419
+0.9|True|attention|0.5776035964960803
+0.92|True|attention|0.48831941345869767
+0.94|True|attention|0.34928190290641065
+0.96|True|attention|0.17140358962433522
+0.98|True|attention|0.05290899474338136
+1.0|True|attention|-1.0

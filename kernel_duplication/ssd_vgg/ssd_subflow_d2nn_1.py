@@ -52,7 +52,7 @@ class SSD(nn.Module):
         self.L2Norm = L2Norm(512, 20)
         self.extras = nn.ModuleList(extras)
 
-        self.fc1 = nn.Linear(64, 64, bias=False) #32
+        self.fc1 = nn.Linear(64, 64, bias=False)
         self.fc2 = nn.Linear(64, 64, bias=False)
 
         self.fc3 = nn.Linear(128, 64, bias=False)
@@ -194,23 +194,23 @@ class SSD(nn.Module):
                 if k in self.touch_layers[self.args.touch_layer_index]:
                     if self.error:
                         if self.attention_mode:
-                            # if k == 2:
-                            #     x = self.error_injection_1(x, self.error, self.duplicate_index1, is_origin=False, n=64)
-                            # elif k == 5:
-                            #     x = self.error_injection_1(x, self.error, self.duplicate_index2, is_origin=False, n=128)
-                            # else:
-                            #     x = self.error_injection_1(x, self.error, self.duplicate_index3, is_origin=False, n=256)
-                            x_copy = x.clone()
                             if k == 2:
-                                x = self.error_injection_new(x, self.error)
-                                x_dup = self.duplication(x_copy, x, self.duplicate_index1)
+                                x = self.error_injection_1(x, self.error, self.duplicate_index1, is_origin=False, n=64)
                             elif k == 5:
-                                x = self.error_injection_new(x, self.error)
-                                x_dup = self.duplication(x_copy, x, self.duplicate_index2)
+                                x = self.error_injection_1(x, self.error, self.duplicate_index2, is_origin=False, n=128)
                             else:
-                                x = self.error_injection_new(x, self.error)
-                                x_dup = self.duplication(x_copy, x, self.duplicate_index3)
-                            x = (x + x_dup) / 2
+                                x = self.error_injection_1(x, self.error, self.duplicate_index3, is_origin=False, n=256)
+                            # x_copy = x.clone()
+                            # if k == 2:
+                            #     x = self.error_injection_new(x, self.error)
+                            #     x_dup = self.duplication(x_copy, x, self.duplicate_index1)
+                            # elif k == 5:
+                            #     x = self.error_injection_new(x, self.error)
+                            #     x_dup = self.duplication(x_copy, x, self.duplicate_index2)
+                            # else:
+                            #     x = self.error_injection_new(x, self.error)
+                            #     x_dup = self.duplication(x_copy, x, self.duplicate_index3)
+                            # x = (x + x_dup) / 2
                         else:
                             if k == 2:
                                 x = self.error_injection(x, self.error, None, is_origin=True, n=64)
