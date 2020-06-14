@@ -15,6 +15,7 @@ from data import VOC_CLASSES as labelmap
 from data import *
 from layers.modules import MultiBoxLoss
 import torch.utils.data as data
+import copy
 
 #from ssd import build_ssd
 from ssd_subflow_d2nn import build_ssd
@@ -43,12 +44,12 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser(
     description='Single Shot MultiBox Detector Evaluation')
-parser.add_argument('--trained_model',
-                    default='weights/attention3/VOC.pth', type=str,
-                    help='Trained state_dict file path to open')
 # parser.add_argument('--trained_model',
-#                     default='weights/attention3/ssd300_COCO_40.pth', type=str,
+#                     default='weights/attention3/VOC.pth', type=str,
 #                     help='Trained state_dict file path to open')
+parser.add_argument('--trained_model',
+                    default='weights/attention3/ssd300_COCO_40.pth', type=str,
+                    help='Trained state_dict file path to open')
 parser.add_argument('--save_folder', default='eval/', type=str,
                     help='File path to save results')
 parser.add_argument('--confidence_threshold', default=0.01, type=float,
@@ -201,17 +202,17 @@ def do_python_eval(output_dir='output', use_07=True):
     print('Mean AP = {:.4f}'.format(np.mean(aps)))
     with open("results", 'a') as f:
         f.write(str(args.error_rate) + "|" + str(args.attention_mode) + "|" + args.ft_type + "|" + str(np.mean(aps)) + "\n")
-    print('~~~~~~~~')
-    print('Results:')
-    for ap in aps:
-        print('{:.3f}'.format(ap))
-    print('{:.3f}'.format(np.mean(aps)))
-    print('~~~~~~~~')
-    print('')
-    print('--------------------------------------------------------------')
-    print('Results computed with the **unofficial** Python eval code.')
-    print('Results should be very close to the official MATLAB eval code.')
-    print('--------------------------------------------------------------')
+    # print('~~~~~~~~')
+    # print('Results:')
+    # for ap in aps:
+    #     print('{:.3f}'.format(ap))
+    # print('{:.3f}'.format(np.mean(aps)))
+    # print('~~~~~~~~')
+    # print('')
+    # print('--------------------------------------------------------------')
+    # print('Results computed with the **unofficial** Python eval code.')
+    # print('Results should be very close to the official MATLAB eval code.')
+    # print('--------------------------------------------------------------')
 
 
 def voc_ap(rec, prec, use_07_metric=True):
@@ -426,8 +427,8 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
                                                                  copy=False)
             all_boxes[j][i] = cls_dets
 
-        print('im_detect: {:d}/{:d} {:.3f}s'.format(i + 1,
-                                                    num_images, detect_time))
+        if i % 100 == 0:
+            print('im_detect: {:d}/{:d} {:.3f}s'.format(i + 1, num_images, detect_time))
 
     with open(det_file, 'wb') as f:
         pickle.dump(all_boxes, f, pickle.HIGHEST_PROTOCOL)
@@ -515,9 +516,12 @@ if __name__ == '__main__':
     dataset = VOCDetection(args.voc_root, [('2007', set_type)],
                            BaseTransform(300, dataset_mean),
                            VOCAnnotationTransform())
-
+    # for name, p in net.named_parameters():
+    #     print(name)
+    # net.error_injection_weights(args.error_rate)
     if not args.attention_mode:
         print("Evaluating model without duplication...")
+        # net.attention_mode = True
     else:
         print("Evaluating model with duplication...")
         # Change to evaluate the model with attention
@@ -528,6 +532,7 @@ if __name__ == '__main__':
                                   pin_memory=True)
 
         if args.ft_type == "attention":
+            print("attention:")
             for k in {1, 2, 3}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 tmp = torch.sum(layer_mp[k], axis=0)
@@ -536,15 +541,19 @@ if __name__ == '__main__':
                 final = final.sort(dim=1, descending=True)
                 if k == 1:
                     net.duplicate_index1 = final.indices[0]
+                    # net.duplicate_index1 = torch.tensor([10,30,19,0,55,59,47,29,62,13,20,35,53,37,28,17,26,33,50,5,57,40,32,34,41,18,12,58,45,52,63,56,27,44,16,6,4,43,60,49,46,48,8,2,1,11,21,36,42,24,31,25,51,3,38,54,15,61,7,9,22,39,23,14])
                     print(net.duplicate_index1)
                 elif k == 2:
                     net.duplicate_index2 = final.indices[0]
                 if k == 3:
                     net.duplicate_index3 = final.indices[0]
         elif args.ft_type == "importance":
+            print("importance:")
             for k in {1, 2, 3}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
-                net_imp = build_ssd(args, 'train', 300, num_classes) 
+                net_imp = build_ssd(args, 'train', 300, num_classes)
+                weights_imp = copy.deepcopy(net.state_dict())
+                net_imp.load_state_dict(weights_imp)
                 net_imp.is_importance = True
                 importance = cal_importance(net_imp, data_loader)
                 net_imp.is_importance = False
@@ -560,12 +569,13 @@ if __name__ == '__main__':
                 if k == 3:
                     net.duplicate_index3 = final.indices[0]
         else:
+            print("d2nn:")
             for k in {1, 2, 3}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 weight_sum, _ = weight_sum_eval(net)
                 # tmp = torch.sum(layer_mp[k], axis=0)
                 tmp = weight_sum[layer_id[k]]
-                print(layer_mp[k].shape, tmp.size())
+                # print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
                 if k == 1:

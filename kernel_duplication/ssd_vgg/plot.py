@@ -6,7 +6,8 @@ import seaborn as sns; sns.set()
 sns.set_style('whitegrid')
 
 path = "result_touch_1.txt"
-x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
+# x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
+x = [0.1, 0.3, 0.5, 0.7]
 
 y_att_all = []
 y_imp_all = []

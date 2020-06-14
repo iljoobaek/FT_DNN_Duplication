@@ -5,6 +5,7 @@ from torch.autograd import Variable
 from layers import *
 from data import voc, coco
 import os
+import copy
 
 
 class SSD(nn.Module):
@@ -39,10 +40,12 @@ class SSD(nn.Module):
         self.duplicate_index2 = None
         self.duplicate_index3 = None
         self.attention_mode = False
-        self.touch_layers = {1: {2}, 2: {2,5}, 3: {2, 5, 10}}
+        # self.touch_layers = {1: {2}, 2: {2,5}, 3: {2, 5, 10}}
+        self.touch_layers = {1: {3}, 2: {3, 6}, 3: {3, 6, 11}}
+        self.weights_copy = {}
 
         self.output = []
-        self.num_duplication = 32
+        self.num_duplication = 5
         self.is_importance = False
         self.index_add_output = {1, 3, 6, 8, 11, 13, 15, 18, 20, 22, 25, 27, 29, 32, 34}
 
@@ -52,14 +55,14 @@ class SSD(nn.Module):
         self.L2Norm = L2Norm(512, 20)
         self.extras = nn.ModuleList(extras)
 
-        self.fc1 = nn.Linear(64, 64, bias=False) #32
-        self.fc2 = nn.Linear(64, 64, bias=False)
+        self.fc1 = nn.Linear(64, 32, bias=False) #32
+        self.fc2 = nn.Linear(32, 64, bias=False)
 
-        self.fc3 = nn.Linear(128, 64, bias=False)
-        self.fc4 = nn.Linear(64, 128, bias=False)
+        self.fc3 = nn.Linear(128, 32, bias=False)
+        self.fc4 = nn.Linear(32, 128, bias=False)
 
-        self.fc5 = nn.Linear(256, 64, bias=False)
-        self.fc6 = nn.Linear(64, 256, bias=False)
+        self.fc5 = nn.Linear(256, 32, bias=False)
+        self.fc6 = nn.Linear(32, 256, bias=False)
 
         self.loc = nn.ModuleList(head[0])
         self.conf = nn.ModuleList(head[1])
@@ -90,7 +93,10 @@ class SSD(nn.Module):
 
         x = x[:, duplicate_index, :, :].flatten()
         random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        x[random_index] = 0
+        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        x[random_index] = m.sample(x[random_index].size()).squeeze()
+        # x[random_index] = m.sample(x[random_index].size()).squeeze() - 1 - x[random_index]
+        # x[random_index] = 0
         x = x.reshape(origin_shape)
         x = x[:, reverse_index, :, :]
 
@@ -114,13 +120,18 @@ class SSD(nn.Module):
         final = final.sort(dim=1)
         reverse_index = final.indices[0]
 
+        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
         x_duplicate = x.clone()
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        x[random_index1] = 0
+        # x[random_index1] = 0
+        x[random_index1] = m.sample(x[random_index1].size()).squeeze()
+        # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
         if not is_origin:
             random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
-            x_duplicate[random_index2] = 0
+            # x_duplicate[random_index2] = 0
+            x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
+            # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
             x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
             x = (x+x_duplicate)/2
 
@@ -128,6 +139,35 @@ class SSD(nn.Module):
         x = x[:, reverse_index, :, :]
 
         return x
+
+    def error_injection_weights(self, error_rate):
+        # error_rate = self.error
+        touch1 = {2}
+        touch2 = {2, 5}
+        touch3 = {2, 5, 10}
+        for k in touch1:
+            size = self.vgg[k].weight.data.size()
+            size1 = self.vgg[k].bias.data.size()
+            self.weights_copy[k] = copy.deepcopy(self.vgg[k])
+            # print(self.vgg[2].weight.data[0][0])
+            total_dim = torch.zeros(size).flatten().shape[0]
+            total_dim1 = torch.zeros(size1).flatten().shape[0]
+            # print(total_dim)
+            random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+            random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
+            x = torch.zeros(total_dim)
+            x1 = torch.zeros(total_dim1)
+            x[random_index] = 1
+            x1[random_index1] = 1
+            x = x.reshape(size)
+            x1 = x1.reshape(size1)
+            m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
+            # print(m.sample(size).size())
+            with torch.no_grad():
+                self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, m.sample(size).squeeze())
+                self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, m.sample(size1).squeeze())
+                # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
+            # print(self.vgg[2].weight.data[0][0])
 
     def error_injection_new(self, x, error_rate):
         """
@@ -141,7 +181,11 @@ class SSD(nn.Module):
 
         x = x.flatten()
         random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        x[random_index] = 0
+
+        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        x[random_index] = m.sample(x[random_index].size()).squeeze()
+        # x[random_index] = m.sample(x[random_index].size()).squeeze() - 1 - x[random_index]
+        # x[random_index] = 0
         x = x.reshape(origin_shape)
 
         return x
@@ -182,7 +226,18 @@ class SSD(nn.Module):
         # apply vgg up to conv4_3 relu
         for k in range(23):
 
+            # x_origin = x.detach().clone()
             x = self.vgg[k](x)
+            # if k in {2, 5, 10}:
+            #     print(self.vgg[k])
+            #     tmp = self.vgg[k].weight.data
+            #     print(tmp.max(), tmp.min(), tmp.size())
+            #     if k == 10:
+            #         exit()
+            # print(type(self.vgg[k]))
+            # if k == 11:
+            #     exit()
+            # print(x[0][0][0][:100])
 
             if self.is_importance and k in self.index_add_output:
                 x.retain_grad()
@@ -195,16 +250,26 @@ class SSD(nn.Module):
                     if self.error:
                         if self.attention_mode:
                             # if k == 2:
-                            #     x = self.error_injection_1(x, self.error, self.duplicate_index1, is_origin=False, n=64)
+                            #     x_copy = self.weights_copy[k](x_origin)
+                            #     # x_dup = self.duplication(x_copy, x, self.duplicate_index1)
+                            #     x = (x_copy + x) / 2
+                            # if k == 3:
+                                # print(x.sum(3).sum(2).sum(0))
+                                # x = self.error_injection_1(x, self.error, self.duplicate_index1, is_origin=False, n=64)
+                                # print(x.sum(3).sum(2).sum(0))
+                                # exit()
                             # elif k == 5:
+                            # elif k == 6:
                             #     x = self.error_injection_1(x, self.error, self.duplicate_index2, is_origin=False, n=128)
                             # else:
                             #     x = self.error_injection_1(x, self.error, self.duplicate_index3, is_origin=False, n=256)
                             x_copy = x.clone()
-                            if k == 2:
+                            # if k == 2:
+                            if k == 3:
                                 x = self.error_injection_new(x, self.error)
                                 x_dup = self.duplication(x_copy, x, self.duplicate_index1)
-                            elif k == 5:
+                            # elif k == 5:
+                            elif k == 6:
                                 x = self.error_injection_new(x, self.error)
                                 x_dup = self.duplication(x_copy, x, self.duplicate_index2)
                             else:
@@ -212,25 +277,39 @@ class SSD(nn.Module):
                                 x_dup = self.duplication(x_copy, x, self.duplicate_index3)
                             x = (x + x_dup) / 2
                         else:
-                            if k == 2:
-                                x = self.error_injection(x, self.error, None, is_origin=True, n=64)
-                            elif k == 5:
-                                x = self.error_injection(x, self.error, None, is_origin=True, n=128)
-                            else:
-                                x = self.error_injection(x, self.error, None, is_origin=True, n=256)
+                            x = x
+                            # if k == 2:
+                            # if k == 3:
+                            #     # print(x.sum(3).sum(2).sum(0).sum())
+                            #     # print(type(self.vgg[k]))
+                            #     # print(x[0][0][1])
+                            #     x = self.error_injection(x, self.error, None, is_origin=True, n=64)
+                            #     # print(x.sum(3).sum(2).sum(0).sum())
+                            #     # print(x[0][0][1])
+                            #     # exit()
+                            # # elif k == 5:
+                            # elif k == 6:
+                            #     x = self.error_injection(x, self.error, None, is_origin=True, n=128)
+                            # else:
+                            #     x = self.error_injection(x, self.error, None, is_origin=True, n=256)
+                                # exit()
                     else:
                         if self.attention_mode:
                             x = x.permute(0, 2, 3, 1)
-                            if k == 2:
+                            # if k == 2:
+                            if k == 3:
                                 x = self.fc1(x)
-                            elif k == 5:
+                            # elif k == 5:
+                            elif k == 6:
                                 x = self.fc3(x)
                             else:
                                 x = self.fc5(x)
                             x = nn.Tanh()(x)
-                            if k == 2:
+                            # if k == 2:
+                            if k == 3:
                                 x = self.fc2(x)
-                            elif k == 5:
+                            # elif k == 5:
+                            elif k == 6:
                                 x = self.fc4(x)
                             else:
                                 x = self.fc6(x)
