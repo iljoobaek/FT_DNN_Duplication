@@ -41,16 +41,25 @@ class SSD(nn.Module):
         self.duplicate_index3 = None
         self.attention_mode = False
         # self.touch_layers = {1: {2}, 2: {2,5}, 3: {2, 5, 10}}
-        self.touch_layers = {1: {3}, 2: {3, 6}, 3: {3, 6, 11}}
+        self.touch_layers = {1: {22}, 2: {3, 6}, 3: {3, 6, 11}}
         self.weights_copy = {}
 
         self.output = []
-        self.num_duplication = 5
+        self.num_duplication = 256
         self.is_importance = False
         self.index_add_output = {1, 3, 6, 8, 11, 13, 15, 18, 20, 22, 25, 27, 29, 32, 34}
 
         # SSD network
         self.vgg = nn.ModuleList(base)
+        # 0:3*300 ->(conv) 1:64*300 ->(relu) 2:64*300 ->(conv) 3:64*300 ->(relu) 4:64*300 ->(pool)
+        # 5:64*150 ->(conv) 6:128*150 ->(relu) 7:128*150 ->(conv) 8:128*150 ->(relu) 9:128*150 ->(pool)
+        # 10:128*75 ->(conv) 11:256*75 ->(relu) 12:256*75 ->(conv) 13:256*75 ->(relu) 14:256*75 ->(conv) 15:256*75 ->(relu) 16:256*75 ->(pool)
+        # 17:256*38 ->(conv) 18:512*38 ->(relu) 19:512*38 ->(conv) 20:512*38 ->(relu) 21:512*38 ->(conv) 22:512*38 ->(relu) 23:512*38 ->(pool)
+        # 24:512*19 ->(conv) 25:512*19 ->(relu) 26:512*19 ->(conv) 27:512*19 ->(relu) 28:512*19 ->(conv) 29:512*19 ->(relu) 30:512*19 ->(pool)
+        # 31:512*19 ->(conv) 32:1024*19 ->(relu) 33:1024*19 ->(conv) 34:1024*19 ->(relu)
+        # 0:1024*19 ->(conv+relu) 1:256*19 ->(conv+relu) 2:512*10 ->(conv+relu) 3:128*10 ->(conv+relu) 4:256*5
+        # ->(conv+relu) 5:128*5 ->(conv+relu) 6:256*3 ->(conv+relu) 7:128*3
+
         # Layer learns to scale the l2 normalized features from conv4_3
         self.L2Norm = L2Norm(512, 20)
         self.extras = nn.ModuleList(extras)
@@ -58,11 +67,17 @@ class SSD(nn.Module):
         self.fc1 = nn.Linear(64, 32, bias=False) #32
         self.fc2 = nn.Linear(32, 64, bias=False)
 
+        self.conv1_attention = nn.Conv2d(64, 128, 1, bias=False)  # 32
+        self.conv2_attention = nn.Conv2d(128, 64, 1, bias=False)
+
         self.fc3 = nn.Linear(128, 32, bias=False)
         self.fc4 = nn.Linear(32, 128, bias=False)
 
         self.fc5 = nn.Linear(256, 32, bias=False)
         self.fc6 = nn.Linear(32, 256, bias=False)
+
+        self.fc7 = nn.Linear(512, 1024, bias=False)
+        self.fc8 = nn.Linear(1024, 512, bias=False)
 
         self.loc = nn.ModuleList(head[0])
         self.conf = nn.ModuleList(head[1])
@@ -227,6 +242,7 @@ class SSD(nn.Module):
         for k in range(23):
 
             # x_origin = x.detach().clone()
+            # print(k, x.size())
             x = self.vgg[k](x)
             # if k in {2, 5, 10}:
             #     print(self.vgg[k])
@@ -265,7 +281,7 @@ class SSD(nn.Module):
                             #     x = self.error_injection_1(x, self.error, self.duplicate_index3, is_origin=False, n=256)
                             x_copy = x.clone()
                             # if k == 2:
-                            if k == 3:
+                            if k == 22:
                                 x = self.error_injection_new(x, self.error)
                                 x_dup = self.duplication(x_copy, x, self.duplicate_index1)
                             # elif k == 5:
@@ -277,7 +293,9 @@ class SSD(nn.Module):
                                 x_dup = self.duplication(x_copy, x, self.duplicate_index3)
                             x = (x + x_dup) / 2
                         else:
-                            x = x
+                            # x = x
+                            if k == 22:
+                                x = self.error_injection(x, self.error, None, is_origin=True, n=512)
                             # if k == 2:
                             # if k == 3:
                             #     # print(x.sum(3).sum(2).sum(0).sum())
@@ -295,24 +313,35 @@ class SSD(nn.Module):
                                 # exit()
                     else:
                         if self.attention_mode:
+
                             x = x.permute(0, 2, 3, 1)
                             # if k == 2:
-                            if k == 3:
-                                x = self.fc1(x)
+                            # if k == 3:
+                            #     # x = self.fc1(x)
+                            #     x = self.conv1_attention(x)
+                            # print(k)
+                            if k == 22:
+                                # print("fc7")
+                                x = self.fc7(x)
+
                             # elif k == 5:
-                            elif k == 6:
-                                x = self.fc3(x)
-                            else:
-                                x = self.fc5(x)
+                            # elif k == 6:
+                            #     x = self.fc3(x)
+                            # else:
+                            #     x = self.fc5(x)
                             x = nn.Tanh()(x)
                             # if k == 2:
-                            if k == 3:
-                                x = self.fc2(x)
+                            # if k == 3:
+                            #     # x = self.fc2(x)
+                            #     x = self.conv2_attention(x)
+                            if k == 22:
+                                # print("fc8")
+                                x = self.fc8(x)
                             # elif k == 5:
-                            elif k == 6:
-                                x = self.fc4(x)
-                            else:
-                                x = self.fc6(x)
+                            # elif k == 6:
+                            #     x = self.fc4(x)
+                            # else:
+                            #     x = self.fc6(x)
                             x = x.permute(0, 3, 1, 2)
 
 
@@ -322,15 +351,17 @@ class SSD(nn.Module):
 
         # apply vgg up to fc7
         for k in range(23, len(self.vgg)):
+            # print(k, x.size())
             x = self.vgg[k](x)
         sources.append(x)
 
         # apply extra layers and cache source layer outputs
         for k, v in enumerate(self.extras):
+            # print(k, x.size())
             x = F.relu(v(x), inplace=True)
             if k % 2 == 1:
                 sources.append(x)
-
+        # exit()
         # apply multibox head to source layers
         for (x, l, c) in zip(sources, self.loc, self.conf):
             loc.append(l(x).permute(0, 2, 3, 1).contiguous())
@@ -415,10 +446,11 @@ def add_extras(cfg, i, batch_norm=False):
 
 
 def multibox(vgg, extra_layers, cfg, num_classes):
-    loc_layers = []
-    conf_layers = []
+    loc_layers = []  # localization
+    conf_layers = []  # confidence
     vgg_source = [21, -2]
     for k, v in enumerate(vgg_source):
+        # (4 + classes) * cfg[k]
         loc_layers += [nn.Conv2d(vgg[v].out_channels,
                                  cfg[k] * 4, kernel_size=3, padding=1)]
         conf_layers += [nn.Conv2d(vgg[v].out_channels,

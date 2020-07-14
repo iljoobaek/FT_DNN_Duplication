@@ -4,7 +4,8 @@ from data.voc0712 import *
 from data.config import *
 from utils.augmentations import SSDAugmentation
 from layers.modules import MultiBoxLoss
-from ssd_subflow_d2nn_1 import build_ssd
+# from ssd_subflow_d2nn_1 import build_ssd
+from ssd_subflow_d2nn import build_ssd
 import os
 import sys
 import time
@@ -115,9 +116,12 @@ def train():
     if not args.run_original:
         net.load_state_dict(torch.load(args.trained_model), strict=False)
         net.attention_mode = True
-        added_layers = {"fc1.weight", "fc2.weight","fc3.weight", "fc4.weight","fc5.weight", "fc6.weight"}
+        # added_layers = {"fc1.weight", "fc2.weight","fc3.weight", "fc4.weight","fc5.weight", "fc6.weight"}
+        added_layers = {"fc1.weight", "fc2.weight", "fc3.weight", "fc4.weight", "fc5.weight", "fc6.weight",
+                        "conv1_attention.weight", "conv2_attention.weight", "fc7.weight", "fc8.weight"}
         for name, param in net.named_parameters():
             if name in added_layers:
+                print(name)
                 continue
             param.requires_grad = False
 

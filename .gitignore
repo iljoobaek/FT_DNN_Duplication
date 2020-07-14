@@ -4,4 +4,7 @@
 *.pyc
 *.pth
 *.DS_Store
+*.txt
+*.pdf
+*.jpeg
 *.pkl

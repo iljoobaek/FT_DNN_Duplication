@@ -48,7 +48,7 @@ parser = argparse.ArgumentParser(
 #                     default='weights/attention3/VOC.pth', type=str,
 #                     help='Trained state_dict file path to open')
 parser.add_argument('--trained_model',
-                    default='weights/attention3/ssd300_COCO_40.pth', type=str,
+                    default='weights/attention3/VOC.pth', type=str,
                     help='Trained state_dict file path to open')
 parser.add_argument('--save_folder', default='eval/', type=str,
                     help='File path to save results')
@@ -488,16 +488,24 @@ def weight_sum_eval(model):
     names = []
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
+        # print(name)
+        # print(name, weights[name + '.weight'].size())
         if isinstance(m, nn.Conv2d):
             names.append(name)
-
+            # print(name, weights[name + '.weight'].size())
             # output input H W
             evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         elif isinstance(m, nn.Linear):
             names.append(name)
+            # print(name, weights[name + '.weight'].size())
             # output input
             evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=0))
+        elif isinstance(m, nn.BatchNorm2d):
+            print(name)
         #if evaluation: print(names[-1], type(m), evaluation[-1].size())
+    # for i in range(len(names)):
+    #     print(names[i], evaluation[i].size())
+    print(names[10], evaluation[10].size())
     return evaluation, names
 
 
@@ -507,9 +515,12 @@ if __name__ == '__main__':
     net = build_ssd(args, 'test', 300, num_classes)            # initialize SSD
     net.load_state_dict(torch.load(args.trained_model), strict=False)
 
-    num_layer_mp = {1: 64, 2: 128, 3:256}
-    layer_id = {1: 2, 2: 3, 3: 5}
-    layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
+    # num_layer_mp = {1: 64, 2: 128, 3:256}
+    num_layer_mp = {1: 512, 2: 128, 3: 256}
+    # layer_id = {1: 2, 2: 3, 3: 5}
+    layer_id = {1: 10, 2: 3, 3: 5}
+    # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
+    layer_mp = {1: net.fc7.weight, 2: net.fc3.weight, 3: net.fc5.weight}
     index_mp = {1: net.duplicate_index1, 2: net.duplicate_index2, 3: net.duplicate_index3}
 
     # load data
@@ -518,7 +529,7 @@ if __name__ == '__main__':
                            VOCAnnotationTransform())
     # for name, p in net.named_parameters():
     #     print(name)
-    # net.error_injection_weights(args.error_rate)
+    # net.error_injection_weights(0.05)
     if not args.attention_mode:
         print("Evaluating model without duplication...")
         # net.attention_mode = True
@@ -533,9 +544,11 @@ if __name__ == '__main__':
 
         if args.ft_type == "attention":
             print("attention:")
-            for k in {1, 2, 3}:
+            for k in {1}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
+                # print(layer_mp[k].size())
                 tmp = torch.sum(layer_mp[k], axis=0)
+                # tmp = layer_mp[k].sum(3).sum(2).sum(0)
                 #print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
@@ -549,7 +562,7 @@ if __name__ == '__main__':
                     net.duplicate_index3 = final.indices[0]
         elif args.ft_type == "importance":
             print("importance:")
-            for k in {1, 2, 3}:
+            for k in {1}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 net_imp = build_ssd(args, 'train', 300, num_classes)
                 weights_imp = copy.deepcopy(net.state_dict())
@@ -570,7 +583,7 @@ if __name__ == '__main__':
                     net.duplicate_index3 = final.indices[0]
         else:
             print("d2nn:")
-            for k in {1, 2, 3}:
+            for k in {1}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 weight_sum, _ = weight_sum_eval(net)
                 # tmp = torch.sum(layer_mp[k], axis=0)

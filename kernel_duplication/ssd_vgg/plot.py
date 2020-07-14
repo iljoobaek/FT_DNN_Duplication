@@ -6,26 +6,31 @@ import seaborn as sns; sns.set()
 sns.set_style('whitegrid')
 
 path = "result_touch_1.txt"
-# x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
-x = [0.1, 0.3, 0.5, 0.7]
+x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
+# x = [0.1, 0.5, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
+# x = [0.1, 0.3, 0.5, 0.7]
 
 y_att_all = []
 y_imp_all = []
 y_sco_all = []
+y_rad_all = []
 labels = []
 y_ori = []
 y_att = []
 y_imp = []
 y_sco = []
+y_rad = []
 with open(path, 'r') as f:
     for line in f:
         if "#duplication" in line:
             y_att_all.append(y_att)
             y_imp_all.append(y_imp)
             y_sco_all.append(y_sco)
+            y_rad_all.append(y_rad)
             y_att = []
             y_imp = []
             y_sco = []
+            y_rad = []
             labels.append(line.strip()[13:])
             continue
         arr = line.strip().split("|")
@@ -36,6 +41,8 @@ with open(path, 'r') as f:
                 y_att.append(float(arr[3]))
             elif arr[2] == "importance":
                 y_imp.append(float(arr[3]))
+            elif arr[2] == "random":
+                y_rad.append(float(arr[3]))
             else:
                 y_sco.append(float(arr[3]))
 
@@ -44,9 +51,9 @@ plt.figure(figsize=(4.8*n_plots, 4.2))
 
 for i in range(n_plots):
     plt.subplot(1, n_plots, i + 1)
-    data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x))),
-            'y': np.concatenate((np.array(y_ori), np.array(y_att_all[i]), np.array(y_imp_all[i]), np.array(y_sco_all[i]))),
-            'method': ["original"] * len(x) + ["attention"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x)}
+    data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x), np.array(x),)),
+            'y': np.concatenate((np.array(y_ori), np.array(y_att_all[i]), np.array(y_imp_all[i]), np.array(y_sco_all[i]), np.array(y_rad_all[i]))),
+            'method': ["original"] * len(x) + ["attention"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x) + ["random"] * len(x)}
     df = pd.DataFrame(data)
 
     ax = sns.lineplot(x='x', y='y', hue='method', data=df)
