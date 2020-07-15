@@ -184,6 +184,7 @@ def weight_sum_eval(model):
     names = []
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
+        print(name)
         if name == 'base_net.2.3':
             names.append(name)
             evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
