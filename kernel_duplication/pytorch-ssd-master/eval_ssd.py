@@ -190,9 +190,10 @@ def weight_sum_eval(model):
         #     evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         if name == 'base_net.2.0':
             print(weights[name + '.weight'].size())
-            exit()
             names.append(name)
-            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
+            print(evaluation[0].size())
+            exit()
 
         # if isinstance(m, torch.nn.Conv2d):
         #     names.append(name)
