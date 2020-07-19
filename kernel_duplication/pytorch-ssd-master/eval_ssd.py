@@ -313,8 +313,10 @@ if __name__ == '__main__':
                 weight_sum, _ = weight_sum_eval(net)
                 # tmp = torch.sum(layer_mp[k], axis=0)
                 # exit()
-                tmp = torch.mul(weight_sum[0], weight_sum[1])
-                # tmp = weight_sum[0]
+                #tmp = torch.mul(weight_sum[0], weight_sum[1])
+                tmp = weight_sum[0] + weight_sum[1] 
+                print(tmp.size())
+		# tmp = weight_sum[0]
                 # print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
