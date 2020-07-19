@@ -1,4 +1,4 @@
-NUM_DUP=5
+NUM_DUP=32
 MODEL=models/attention3/ssd300_COCO_9.pth
 
 #python eval_ssd.py --error_rate 0 --num_duplication 0 --run_original False --duplicated False --ft_type none --dataset_type voc --dataset /home/rtml/data/VOCdevkit/VOC2007 --net mb1-ssd --trained_model models/mobilenet-v1-ssd-mp-0_675.pth --label_file models/voc-model-labels.txt
