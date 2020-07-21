@@ -119,9 +119,9 @@ class SSD(nn.Module):
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
-                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=64)
+                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512)
                         else:
-                            x = self.error_injection(x, self.error, None, is_origin=True, n=64)
+                            x = self.error_injection(x, self.error, None, is_origin=True, n=512)
                     elif self.attention_mode:
                         # print("train attention")
                         # x = x.permute(0, 2, 3, 1)
