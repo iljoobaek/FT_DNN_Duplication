@@ -185,16 +185,9 @@ def weight_sum_eval(model):
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
         print(name, m)
-        if name == 'base_net.12.0':
-            names.append(name)
-            evaluation.append(weights[name + '.weight'].detach().clone().repeat(1, 1024, 1, 1))
-            print(evaluation[-1].size())
-            # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
         if name == 'base_net.12.3':
             names.append(name)
-            evaluation.append(weights[name + '.weight'].detach().clone().permute(1, 0, 2, 3))
-            print(evaluation[-1].size())
-            # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         # if name == 'base_net.2.0':
             # print(weights[name + '.weight'].size())
             # names.append(name)
@@ -324,14 +317,10 @@ if __name__ == '__main__':
                 # exit()
                 # tmp = torch.sum(layer_mp[k], axis=0)
                 # exit()
-                tmp = torch.mul(weight_sum[0], weight_sum[1])
-                print(tmp.size())
-                tmp = tmp.abs().sum(3).sum(2).sum(1)
-                print(tmp.size())
-                # tmp = torch.mul(weight_sum[0], weight_sum[1])
+                #tmp = torch.mul(weight_sum[0], weight_sum[1])
                 #tmp = weight_sum[0] + weight_sum[1]
                 # print(tmp.size())
-                # tmp = weight_sum[0]
+                tmp = weight_sum[0]
                 # print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
