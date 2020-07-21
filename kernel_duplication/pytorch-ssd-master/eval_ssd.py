@@ -264,7 +264,7 @@ if __name__ == '__main__':
         # Change to evaluate the model with attention
         # device = torch.device("cuda")
 
-        num_layer_mp = {1: 64, 2: 128, 3: 256}
+        num_layer_mp = {1: 512, 2: 128, 3: 256}
         # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
         # layer_mp = {1: net.fc1.weight}
         layer_mp = {1: net.conv1_attention.weight}
