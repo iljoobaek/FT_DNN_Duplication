@@ -309,7 +309,7 @@ if __name__ == '__main__':
                     net.duplicate_index2 = final.indices[0]
                 if k == 3:
                     net.duplicate_index3 = final.indices[0]
-        else:
+        elif args.ft_type == "d2nn":
             print("d2nn:")
             for k in {1}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
@@ -330,6 +330,21 @@ if __name__ == '__main__':
                     net.duplicate_index2 = final.indices[0]
                 if k == 3:
                     net.duplicate_index3 = final.indices[0]
+        else:
+            print("random:")
+            for k in {1}:
+                index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+                tmp = torch.randn(num_layer_mp[k]).to(DEVICE)
+                final = torch.stack((tmp, index), axis=0)
+                final = final.sort(dim=1, descending=True)
+                if k == 1:
+                    net.duplicate_index1 = final.indices[0]
+                    print(net.duplicate_index1)
+                elif k == 2:
+                    net.duplicate_index2 = final.indices[0]
+                if k == 3:
+                    net.duplicate_index3 = final.indices[0]
+
 
         net.attention_mode = True
 
