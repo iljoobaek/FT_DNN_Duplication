@@ -185,7 +185,7 @@ def weight_sum_eval(model):
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
         print(name, m)
-        # if name == 'base_net.2.3':
+        # if name == 'base_net.12.3':
         #     names.append(name)
         #     evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         # if name == 'base_net.2.0':
@@ -314,7 +314,7 @@ if __name__ == '__main__':
             for k in {1}:
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
                 weight_sum, _ = weight_sum_eval(net)
-                exit()
+                # exit()
                 # tmp = torch.sum(layer_mp[k], axis=0)
                 # exit()
                 #tmp = torch.mul(weight_sum[0], weight_sum[1])
