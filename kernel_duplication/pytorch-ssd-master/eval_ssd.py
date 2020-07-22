@@ -201,7 +201,7 @@ def weight_sum_eval(model):
             # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
             # print(evaluation[0].size())
             # exit()
-        if name == 'base_net.8.3':
+        if name == 'base_net.11.3':
            names.append(name)
            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
 
