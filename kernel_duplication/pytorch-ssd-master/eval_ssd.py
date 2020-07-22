@@ -190,20 +190,20 @@ def weight_sum_eval(model):
         #     evaluation.append(weights[name + '.weight'].detach().clone().repeat(1, 1024, 1, 1))
         #     print(evaluation[-1].size())
             # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
-        if name == 'base_net.9.3':
-            names.append(name)
+        # if name == 'base_net.9.3':
+        #     names.append(name)
             # evaluation.append(weights[name + '.weight'].detach().clone().permute(1, 0, 2, 3))
             # print(evaluation[-1].size())
-            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+            # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         # if name == 'base_net.2.0':
             # print(weights[name + '.weight'].size())
             # names.append(name)
             # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
             # print(evaluation[0].size())
             # exit()
-        # if name == 'base_net.1.3':
-        #    names.append(name)
-        #    evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
+        if name == 'base_net.8.3':
+           names.append(name)
+           evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=1))
 
         # if isinstance(m, torch.nn.Conv2d):
         #     names.append(name)
