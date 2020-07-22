@@ -115,7 +115,7 @@ class SSD(nn.Module):
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 x = layer(x)
                 # print(start_layer_index + i, x.size())
-                if not self.run_original and start_layer_index + i == 9:
+                if not self.run_original and start_layer_index + i == 8:
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
