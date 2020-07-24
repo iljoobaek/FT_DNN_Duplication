@@ -269,6 +269,12 @@ if __name__ == '__main__':
                 print((mod.running_mean.data - net.base_net[net.weight_index][ii].running_mean.data).sum())
                 print((mod.running_var.data - net.base_net[net.weight_index][ii].running_var.data).sum())
     net.error_injection_weights(0)
+    for ii, mod in enumerate(net.weights_copy[net.weight_index]):
+        if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
+            print((mod.weight.data - net.base_net[net.weight_index][ii].weight.data).sum())
+            if isinstance(mod, nn.BatchNorm2d):
+                print((mod.running_mean.data - net.base_net[net.weight_index][ii].running_mean.data).sum())
+                print((mod.running_var.data - net.base_net[net.weight_index][ii].running_var.data).sum())
 
     if not args.duplicated:
         print("Evaluating model without duplication...")
