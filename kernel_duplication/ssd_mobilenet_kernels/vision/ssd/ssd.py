@@ -59,7 +59,7 @@ class SSD(nn.Module):
         self.weight_index = 0
         self.weights_copy = {}
 
-    def error_injection(self, x, error_rate, duplicate_index, is_origin, n):
+    def error_injection(self, x, error_rate, duplicate_index, is_origin, n, x_dup=None):
         """
             Simulate Error Injection.
             :param x: tensor, input tensor (in our case CNN feature map)
@@ -80,18 +80,20 @@ class SSD(nn.Module):
 
         m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
-        x_duplicate = x.clone()
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
         x[random_index1] = 0
-        # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
-        # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
-        # if not is_origin:
-        #     random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
-            #x_duplicate[random_index2] = 0
+        if x_dup:
+            x_duplicate = x_dup
+            random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
+            x_duplicate[random_index2] = 0
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
-            # x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
-            # x = (x+x_duplicate)/2
+            x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
+            x = (x+x_duplicate)/2
+
+        # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
+        # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
+
 
         x = x.reshape(origin_shape)
         x = x[:, reverse_index, :, :]
@@ -164,8 +166,9 @@ class SSD(nn.Module):
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
-                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512)
-                            self.weights_copy[self.weight_index].eval()
+                            x_dup = self.weights_copy[self.weight_index](x_copy)
+                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512, x_dup=x_dup)
+                            # self.weights_copy[self.weight_index].eval()
                             # print(x_copy)
 
                             # x_copy1 = copy.deepcopy(x_copy)
@@ -210,10 +213,10 @@ class SSD(nn.Module):
 
                             # print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
 
-                            x_dup = self.weights_copy[self.weight_index](x_copy)
+
                             # print((x_dup - layer(x_copy)).sum())
                             # exit()
-                            x = (x + x_dup) / 2
+                            # x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
                     elif self.attention_mode:
