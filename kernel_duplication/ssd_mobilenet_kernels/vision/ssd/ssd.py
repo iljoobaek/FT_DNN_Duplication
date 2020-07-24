@@ -165,7 +165,7 @@ class SSD(nn.Module):
                         # print(self.error)
                         if self.duplicated:
                             x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512)
-                            # print(self.weights_copy[self.weight_index])
+                            self.weights_copy[self.weight_index].eval()
                             # print(x_copy)
 
                             x_copy1 = copy.deepcopy(x_copy)
@@ -212,8 +212,6 @@ class SSD(nn.Module):
 
                             x_dup = self.weights_copy[self.weight_index](x_copy)
                             print((x_dup - layer(x_copy)).sum())
-                            print((self.weights_copy[self.weight_index](x_copy) - layer(x_copy)).sum())
-                            print((self.weights_copy[self.weight_index](x_copy) - layer(x_copy)).sum())
                             exit()
                             x = (x + x_dup) / 2
                         else:
