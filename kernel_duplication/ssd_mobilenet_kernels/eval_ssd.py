@@ -262,12 +262,11 @@ if __name__ == '__main__':
 
     net.weight_index = args.weight_index
     net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
-    # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
-    #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
-    #         print((mod.weight.data - net.base_net[net.weight_index][ii].weight.data).sum())
-    #         if isinstance(mod, nn.BatchNorm2d):
-    #             print((mod.running_mean.data - net.base_net[net.weight_index][ii].running_mean.data).sum())
-    #             print((mod.running_var.data - net.base_net[net.weight_index][ii].running_var.data).sum())
+    for ii, mod in enumerate(net.weights_copy[net.weight_index]):
+        if isinstance(mod, nn.BatchNorm2d):
+            mod.track_running_stats = False
+            net.base_net[net.weight_index][ii].track_running_stats = False
+
     net.error_injection_weights(0)
     # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
     #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
