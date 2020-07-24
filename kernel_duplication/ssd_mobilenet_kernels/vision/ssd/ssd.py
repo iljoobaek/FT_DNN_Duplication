@@ -166,16 +166,16 @@ class SSD(nn.Module):
                             # print(self.weights_copy[self.weight_index])
                             # print(x_copy)
 
-                            # x_copy1 = copy.deepcopy(x_copy)
-                            # x_copy2 = copy.deepcopy(x_copy)
+                            x_copy1 = copy.deepcopy(x_copy)
+                            x_copy2 = copy.deepcopy(x_copy)
                             x_dup = self.weights_copy[self.weight_index](x_copy)
 
-                            # print((x_copy - x_dup).sum())
+                            print((x_copy1 - x_copy2).sum())
                             for ii, mod in enumerate(layer):
                                 print(mod)
                                 if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
                                     print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
-                            print((x_dup - layer(x_copy)).sum())
+                            print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
                             x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
