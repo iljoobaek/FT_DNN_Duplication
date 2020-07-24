@@ -184,13 +184,23 @@ class SSD(nn.Module):
                                         print((mod.running_var.data - self.weights_copy[
                                             self.weight_index][ii].running_var.data).sum())
                                 x_copy1 = mod(x_copy1)
+                                print(1)
+                                if isinstance(mod, nn.BatchNorm2d):
+                                    print((mod.running_mean.data - self.weights_copy[self.weight_index][
+                                        ii].running_mean.data).sum())
+                                    print((mod.running_var.data - self.weights_copy[
+                                        self.weight_index][ii].running_var.data).sum())
                                 x_tmp = mod(x_copy2)
+                                print(2)
+                                if isinstance(mod, nn.BatchNorm2d):
+                                    print((mod.running_mean.data - self.weights_copy[self.weight_index][
+                                        ii].running_mean.data).sum())
+                                    print((mod.running_var.data - self.weights_copy[
+                                        self.weight_index][ii].running_var.data).sum())
                                 x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
                                 print((x_copy1 - x_copy2).sum())
                                 print((x_tmp - x_copy2).sum())
                                 if isinstance(mod, nn.BatchNorm2d):
-                                    print((mod.bias.data - self.weights_copy[self.weight_index][
-                                        ii].bias.data).sum())
                                     print((mod.running_mean.data - self.weights_copy[self.weight_index][
                                         ii].running_mean.data).sum())
                                     print((mod.running_var.data - self.weights_copy[
