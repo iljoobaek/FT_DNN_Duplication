@@ -156,6 +156,7 @@ class SSD(nn.Module):
                     x_copy = x.detach().clone()
 
                 x = layer(x)
+                x_tmp = x.detach().clone()
                 # print(start_layer_index + i, x.size())
                 if not self.run_original and start_layer_index + i == self.weight_index:
                     if self.error:
@@ -165,11 +166,11 @@ class SSD(nn.Module):
                             # print(self.weights_copy[self.weight_index])
                             # print(x_copy)
 
-                            x_copy1 = copy.deepcopy(x_copy)
-                            x_copy2 = copy.deepcopy(x_copy)
+                            # x_copy1 = copy.deepcopy(x_copy)
+                            # x_copy2 = copy.deepcopy(x_copy)
                             x_dup = self.weights_copy[self.weight_index](x_copy)
 
-                            print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
+                            print((x_tmp - x_dup).sum())
                             # for ii, mod in enumerate(layer):
                             #     if isinstance(mod, nn.BatchNorm2d):
                             #         print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
