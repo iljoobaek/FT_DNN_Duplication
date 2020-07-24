@@ -355,6 +355,7 @@ if __name__ == '__main__':
 
 
         net.attention_mode = True
+    net.eval()
 
     print(f'It took {timer.end("Load Model")} seconds to load the model.')
     if args.net == 'vgg16-ssd':
