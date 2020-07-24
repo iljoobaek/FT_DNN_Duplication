@@ -207,7 +207,7 @@ class SSD(nn.Module):
 
                                 print((x_copy1 - x_copy2).sum())
                                 # print((x_tmp - x_copy2).sum())
-                                
+
                             # print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
 
                             x_dup = self.weights_copy[self.weight_index](x_copy)
