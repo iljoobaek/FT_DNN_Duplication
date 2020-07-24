@@ -250,8 +250,6 @@ if __name__ == '__main__':
     net.num_duplication = args.num_duplication
     net.run_original = args.run_original
     net.duplicated = args.duplicated
-    net.weight_index = args.weight_index
-    net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
 
     # stored_weights = torch.load("models/mobilenet-v1-ssd-mp-0_675.pth")
     # curr_weights = torch.load(args.trained_model)
@@ -260,6 +258,9 @@ if __name__ == '__main__':
     # exit()
 
     net = net.to(DEVICE)
+
+    net.weight_index = args.weight_index
+    net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
 
     if not args.duplicated:
         print("Evaluating model without duplication...")
