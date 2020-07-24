@@ -83,9 +83,9 @@ class SSD(nn.Module):
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
         x[random_index1] = 0
         if x_dup is not None:
-            x_duplicate = x_dup
-            random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
-            x_duplicate[random_index2] = 0
+            x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
+            # random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
+            # x_duplicate[random_index2] = 0
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
             x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
