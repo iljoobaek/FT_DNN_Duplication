@@ -168,22 +168,22 @@ class SSD(nn.Module):
                             # print(self.weights_copy[self.weight_index])
                             # print(x_copy)
 
-                            # x_copy1 = copy.deepcopy(x_copy)
-                            # x_copy2 = copy.deepcopy(x_copy)
+                            x_copy1 = copy.deepcopy(x_copy)
+                            x_copy2 = copy.deepcopy(x_copy)
                             # x_dup = self.weights_copy[self.weight_index](x_copy)
 
                             # print((x_copy1 - x_copy2).sum())
-                            # for ii, mod in enumerate(layer):
-                            #     print(mod)
-                            #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
-                            #         print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
-                            #         if isinstance(mod, nn.BatchNorm2d):
-                            #             print((mod.running_mean.data - self.weights_copy[self.weight_index][ii].running_mean.data).sum())
-                            #             print((mod.running_var.data - self.weights_copy[
-                            #                 self.weight_index][ii].running_var.data).sum())
-                            #     x_copy1 = mod(x_copy1)
-                            #     x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
-                            #     print((x_copy1 - x_copy2).sum())
+                            for ii, mod in enumerate(layer):
+                                print(mod)
+                                if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
+                                    print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
+                                    if isinstance(mod, nn.BatchNorm2d):
+                                        print((mod.running_mean.data - self.weights_copy[self.weight_index][ii].running_mean.data).sum())
+                                        print((mod.running_var.data - self.weights_copy[
+                                            self.weight_index][ii].running_var.data).sum())
+                                x_copy1 = mod(x_copy1)
+                                x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
+                                print((x_copy1 - x_copy2).sum())
                             # print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
                             # exit()
                             x_dup = self.weights_copy[self.weight_index](x_copy)

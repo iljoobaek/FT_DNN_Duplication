@@ -265,7 +265,7 @@ if __name__ == '__main__':
     for ii, mod in enumerate(net.weights_copy[net.weight_index]):
         if isinstance(mod, nn.BatchNorm2d):
             mod.track_running_stats = False
-            net.base_net[net.weight_index][ii].track_running_stats = False
+            # net.base_net[net.weight_index][ii].track_running_stats = False
 
     net.error_injection_weights(0)
     # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
