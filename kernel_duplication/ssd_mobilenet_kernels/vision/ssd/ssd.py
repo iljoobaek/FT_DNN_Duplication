@@ -157,6 +157,8 @@ class SSD(nn.Module):
                         # print(self.error)
                         if self.duplicated:
                             x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512)
+                            print(self.weights_copy[self.weight_index])
+                            print(x_copy)
                             x_dup = self.weights_copy[self.weight_index](x_copy)
                             x = (x + x_dup) / 2
                         else:
