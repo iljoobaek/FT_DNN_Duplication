@@ -166,7 +166,7 @@ class SSD(nn.Module):
                             x_dup = self.weights_copy[self.weight_index](x_copy)
                             for ii, mod in enumerate(layer):
                                 if isinstance(mod, nn.Conv2d):
-                                    print((mod.weight.data - self.weights_copy[self.weight_index][i].weight.data).sum())
+                                    print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
                             x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
