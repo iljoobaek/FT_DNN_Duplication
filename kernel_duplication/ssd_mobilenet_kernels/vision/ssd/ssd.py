@@ -168,51 +168,51 @@ class SSD(nn.Module):
                             self.weights_copy[self.weight_index].eval()
                             # print(x_copy)
 
-                            x_copy1 = copy.deepcopy(x_copy)
-                            x_copy2 = copy.deepcopy(x_copy)
+                            # x_copy1 = copy.deepcopy(x_copy)
+                            # x_copy2 = copy.deepcopy(x_copy)
                             # x_dup = self.weights_copy[self.weight_index](x_copy)
 
                             # print((x_copy1 - x_copy2).sum())
-                            for ii, mod in enumerate(layer):
-                                print(mod)
-                                if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
-                                    print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
-                                    if isinstance(mod, nn.BatchNorm2d):
-                                        print((mod.bias.data - self.weights_copy[self.weight_index][
-                                            ii].bias.data).sum())
-                                        print((mod.running_mean.data - self.weights_copy[self.weight_index][ii].running_mean.data).sum())
-                                        print((mod.running_var.data - self.weights_copy[
-                                            self.weight_index][ii].running_var.data).sum())
-
-                                x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
-                                if isinstance(mod, nn.BatchNorm2d):
-                                    print((mod.running_mean.data - self.weights_copy[self.weight_index][
-                                        ii].running_mean.data).sum())
-                                    print((mod.running_var.data - self.weights_copy[
-                                        self.weight_index][ii].running_var.data).sum())
-                                x_copy1 = mod(x_copy1)
-                                print(1)
-                                if isinstance(mod, nn.BatchNorm2d):
-                                    print((mod.running_mean.data - self.weights_copy[self.weight_index][
-                                        ii].running_mean.data).sum())
-                                    print((mod.running_var.data - self.weights_copy[
-                                        self.weight_index][ii].running_var.data).sum())
-                                # x_tmp = mod(x_copy2)
-                                print(2)
+                            # for ii, mod in enumerate(layer):
+                            #     print(mod)
+                            #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
+                            #         print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
+                            #         if isinstance(mod, nn.BatchNorm2d):
+                            #             print((mod.bias.data - self.weights_copy[self.weight_index][
+                            #                 ii].bias.data).sum())
+                            #             print((mod.running_mean.data - self.weights_copy[self.weight_index][ii].running_mean.data).sum())
+                            #             print((mod.running_var.data - self.weights_copy[
+                            #                 self.weight_index][ii].running_var.data).sum())
+                            #
+                            #     x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
+                            #     if isinstance(mod, nn.BatchNorm2d):
+                            #         print((mod.running_mean.data - self.weights_copy[self.weight_index][
+                            #             ii].running_mean.data).sum())
+                            #         print((mod.running_var.data - self.weights_copy[
+                            #             self.weight_index][ii].running_var.data).sum())
+                            #     x_copy1 = mod(x_copy1)
+                            #     print(1)
+                            #     if isinstance(mod, nn.BatchNorm2d):
+                            #         print((mod.running_mean.data - self.weights_copy[self.weight_index][
+                            #             ii].running_mean.data).sum())
+                            #         print((mod.running_var.data - self.weights_copy[
+                            #             self.weight_index][ii].running_var.data).sum())
+                            #     # x_tmp = mod(x_copy2)
+                            #     print(2)
                                 # if isinstance(mod, nn.BatchNorm2d):
                                 #     print((mod.running_mean.data - self.weights_copy[self.weight_index][
                                 #         ii].running_mean.data).sum())
                                 #     print((mod.running_var.data - self.weights_copy[
                                 #         self.weight_index][ii].running_var.data).sum())
 
-                                print((x_copy1 - x_copy2).sum())
+                                # print((x_copy1 - x_copy2).sum())
                                 # print((x_tmp - x_copy2).sum())
 
                             # print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
 
                             x_dup = self.weights_copy[self.weight_index](x_copy)
-                            print((x_dup - layer(x_copy)).sum())
-                            exit()
+                            # print((x_dup - layer(x_copy)).sum())
+                            # exit()
                             x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
