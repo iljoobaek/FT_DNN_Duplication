@@ -109,23 +109,23 @@ class SSD(nn.Module):
                 if isinstance(m, nn.Conv2d):
                     print(m.weight.data.size())
                     size = m.weight.data.size()
-                    size1 = m.bias.data.size()
+                    # size1 = m.bias.data.size()
                     total_dim = torch.zeros(size).flatten().shape[0]
-                    total_dim1 = torch.zeros(size1).flatten().shape[0]
+                    # total_dim1 = torch.zeros(size1).flatten().shape[0]
             # print(total_dim)
                     random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-                    random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
+                    # random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
                     x = torch.zeros(total_dim)
-                    x1 = torch.zeros(total_dim1)
+                    # x1 = torch.zeros(total_dim1)
                     x[random_index] = 1
-                    x1[random_index1] = 1
+                    # x1[random_index1] = 1
                     x = x.reshape(size)
-                    x1 = x1.reshape(size1)
+                    # x1 = x1.reshape(size1)
                     m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
             # print(m.sample(size).size())
                     with torch.no_grad():
                         m.weight.data = torch.where(x == 0, m.weight.data, m.sample(size).squeeze())
-                        m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
+                        # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
 
