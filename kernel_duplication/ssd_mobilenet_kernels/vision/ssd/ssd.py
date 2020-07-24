@@ -117,6 +117,7 @@ class SSD(nn.Module):
                     # random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
                     x = torch.zeros(total_dim)
                     # x1 = torch.zeros(total_dim1)
+                    x_zero = torch.zeros(size).to(self.device)
                     x[random_index] = 1
                     # x1[random_index1] = 1
                     x = x.reshape(size).to(self.device)
@@ -125,7 +126,7 @@ class SSD(nn.Module):
             # print(m.sample(size).size())
                     with torch.no_grad():
                         # module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
-                        module.weight.data = torch.where(x == 0, module.weight.data, 0)
+                        module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
