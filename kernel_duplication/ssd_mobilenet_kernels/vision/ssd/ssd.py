@@ -105,29 +105,28 @@ class SSD(nn.Module):
             # print(type(self.base_net[k]))
             # print(self.base_net[k])
             for m in self.base_net[k]:
-                print(m)
-                print(m.weight.data.size())
-            size = self.base_net[k].weight.data.size()
-            size1 = self.base_net[k].bias.data.size()
-            # self.weights_copy[k] = copy.deepcopy(self.vgg[k])
-            # print(self.vgg[2].weight.data[0][0])
-            total_dim = torch.zeros(size).flatten().shape[0]
-            total_dim1 = torch.zeros(size1).flatten().shape[0]
+                # print(m)
+                if isinstance(m, nn.Conv2d):
+                    print(m.weight.data.size())
+                    size = m.weight.data.size()
+                    size1 = m.bias.data.size()
+                    total_dim = torch.zeros(size).flatten().shape[0]
+                    total_dim1 = torch.zeros(size1).flatten().shape[0]
             # print(total_dim)
-            random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-            random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
-            x = torch.zeros(total_dim)
-            x1 = torch.zeros(total_dim1)
-            x[random_index] = 1
-            x1[random_index1] = 1
-            x = x.reshape(size)
-            x1 = x1.reshape(size1)
-            m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
+                    random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+                    random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
+                    x = torch.zeros(total_dim)
+                    x1 = torch.zeros(total_dim1)
+                    x[random_index] = 1
+                    x1[random_index1] = 1
+                    x = x.reshape(size)
+                    x1 = x1.reshape(size1)
+                    m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
             # print(m.sample(size).size())
-            with torch.no_grad():
-                self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, m.sample(size).squeeze())
-                self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, m.sample(size1).squeeze())
-                # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
+                    with torch.no_grad():
+                        m.weight.data = torch.where(x == 0, m.weight.data, m.sample(size).squeeze())
+                        m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
+                        # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
