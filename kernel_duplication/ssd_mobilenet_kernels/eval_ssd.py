@@ -355,7 +355,7 @@ if __name__ == '__main__':
 
 
         net.attention_mode = True
-    net.eval()
+    # net.eval()
 
     print(f'It took {timer.end("Load Model")} seconds to load the model.')
     if args.net == 'vgg16-ssd':
@@ -374,6 +374,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     results = []
+    predictor.eval()
     for i in range(len(dataset)):
         if i % 100 == 0:
             print("process image", i, "of", len(dataset))
