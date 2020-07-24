@@ -102,8 +102,11 @@ class SSD(nn.Module):
         # error_rate = self.error
         touch1 = {self.weight_index}
         for k in touch1:
-            print(type(self.base_net[k]))
-            print(self.base_net[k])
+            # print(type(self.base_net[k]))
+            # print(self.base_net[k])
+            for m in self.base_net[k]:
+                print(m)
+                print(m.weight.data.size())
             size = self.base_net[k].weight.data.size()
             size1 = self.base_net[k].bias.data.size()
             # self.weights_copy[k] = copy.deepcopy(self.vgg[k])
