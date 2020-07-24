@@ -261,15 +261,13 @@ if __name__ == '__main__':
     net = net.to(DEVICE)
 
     net.weight_index = args.weight_index
-    # net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
-    net.weights_copy[net.weight_index] = type(net.base_net[net.weight_index])()
-    print(net.weights_copy[net.weight_index])
-    exit()
+    net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
+
     # net.weights_copy[net.weight_index].load_state_dict
-    # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
-    #     if isinstance(mod, nn.BatchNorm2d):
-    #         mod.track_running_stats = False
-    #         net.base_net[net.weight_index][ii].track_running_stats = False
+    for ii, mod in enumerate(net.weights_copy[net.weight_index]):
+        if isinstance(mod, nn.BatchNorm2d):
+            mod.track_running_stats = False
+            # net.base_net[net.weight_index][ii].track_running_stats = False
 
     net.error_injection_weights(0)
     # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
