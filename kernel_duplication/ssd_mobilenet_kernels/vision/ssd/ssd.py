@@ -163,10 +163,12 @@ class SSD(nn.Module):
                             x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512)
                             # print(self.weights_copy[self.weight_index])
                             # print(x_copy)
+
                             x_dup = self.weights_copy[self.weight_index](x_copy)
-                            for ii, mod in enumerate(layer):
-                                if isinstance(mod, nn.BatchNorm2d):
-                                    print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
+                            print((x_dup - layer(x_copy)).sum())
+                            # for ii, mod in enumerate(layer):
+                            #     if isinstance(mod, nn.BatchNorm2d):
+                            #         print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
                             x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
