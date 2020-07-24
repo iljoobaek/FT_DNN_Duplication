@@ -165,8 +165,11 @@ class SSD(nn.Module):
                             # print(self.weights_copy[self.weight_index])
                             # print(x_copy)
 
+                            x_copy1 = copy.deepcopy(x_copy)
+                            x_copy2 = copy.deepcopy(x_copy)
                             x_dup = self.weights_copy[self.weight_index](x_copy)
-                            print((self.weights_copy[self.weight_index](x_copy) - layer(x_copy)).sum())
+
+                            print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
                             # for ii, mod in enumerate(layer):
                             #     if isinstance(mod, nn.BatchNorm2d):
                             #         print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
