@@ -106,6 +106,8 @@ class SSD(nn.Module):
             # print(self.base_net[k])
             for module in self.base_net[k]:
                 print(module)
+                # if isinstance(module, nn.BatchNorm2d):
+                #     print(module)
                 if isinstance(module, nn.Conv2d):
                     print(module.weight.data.size())
                     size = module.weight.data.size()

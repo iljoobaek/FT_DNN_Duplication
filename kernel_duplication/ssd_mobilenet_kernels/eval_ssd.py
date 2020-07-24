@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from vision.ssd.config import mobilenetv1_ssd_config
 from vision.nn.multibox_loss import MultiboxLoss
 from vision.ssd.vgg_ssd import create_vgg_ssd, create_vgg_ssd_predictor
@@ -261,6 +262,12 @@ if __name__ == '__main__':
 
     net.weight_index = args.weight_index
     net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
+    for ii, mod in enumerate(net.weights_copy[net.weight_index]):
+        if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
+            print((mod.weight.data - net.base_net[net.weight_index][ii].weight.data).sum())
+            if isinstance(mod, nn.BatchNorm2d):
+                print((mod.running_mean.data - net.base_net[net.weight_index][ii].running_mean.data).sum())
+                print((mod.running_var.data - net.base_net[net.weight_index][ii].running_var.data).sum())
     net.error_injection_weights(0)
 
     if not args.duplicated:
