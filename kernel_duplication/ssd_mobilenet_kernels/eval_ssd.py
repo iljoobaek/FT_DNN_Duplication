@@ -43,6 +43,8 @@ parser.add_argument('--error_rate', type=float, default=0, metavar='M', help='er
 parser.add_argument('--num_duplication', type=int, default=0, metavar='M', help='error_rate')
 # parser.add_argument('--touch_layer_index', default=1, type=int,
 #                     help='how many layers to add attention, maximum 3')
+parser.add_argument('--weight_index', default=11, type=int,
+                    help='which layers to duplicate')
 parser.add_argument('--ft_type', default='none', type=str, help='Type of kernel duplication')
 args = parser.parse_args()
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() and args.use_cuda else "cpu")
@@ -185,7 +187,8 @@ def weight_sum_eval(model):
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
         print(name, m)
-        if name == 'base_net.12.3':
+        # if name == 'base_net.12.3':
+        if name == 'base_net.' + str(model.weight_index + 1) + '.3':
             names.append(name)
             evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         # if name == 'base_net.2.0':
@@ -247,6 +250,8 @@ if __name__ == '__main__':
     net.num_duplication = args.num_duplication
     net.run_original = args.run_original
     net.duplicated = args.duplicated
+    net.weight_index = args.weight_index
+    net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
 
     # stored_weights = torch.load("models/mobilenet-v1-ssd-mp-0_675.pth")
     # curr_weights = torch.load(args.trained_model)

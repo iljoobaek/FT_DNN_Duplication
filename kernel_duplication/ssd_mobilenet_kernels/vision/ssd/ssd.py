@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from typing import List, Tuple
 import torch.nn.functional as F
+import copy
 
 from ..utils import box_utils
 from collections import namedtuple
@@ -54,6 +55,10 @@ class SSD(nn.Module):
         self.output = []
         self.is_importance = False
 
+        # copy weights
+        self.weight_index = 0
+        self.weights_copy = {}
+
     def error_injection(self, x, error_rate, duplicate_index, is_origin, n):
         """
             Simulate Error Injection.
@@ -80,13 +85,13 @@ class SSD(nn.Module):
         x[random_index1] = 0
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
-        if not is_origin:
-            random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
+        # if not is_origin:
+        #     random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
             #x_duplicate[random_index2] = 0
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
-            x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
-            x = (x+x_duplicate)/2
+            # x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
+            # x = (x+x_duplicate)/2
 
         x = x.reshape(origin_shape)
         x = x[:, reverse_index, :, :]
@@ -95,13 +100,13 @@ class SSD(nn.Module):
 
     def error_injection_weights(self, error_rate):
         # error_rate = self.error
-        touch1 = {2}
-        touch2 = {2, 5}
-        touch3 = {2, 5, 10}
+        touch1 = {self.weight_index}
         for k in touch1:
-            size = self.vgg[k].weight.data.size()
-            size1 = self.vgg[k].bias.data.size()
-            self.weights_copy[k] = copy.deepcopy(self.vgg[k])
+            print(type(self.base_net[k]))
+            print(self.base_net[k])
+            size = self.base_net[k].weight.data.size()
+            size1 = self.base_net[k].bias.data.size()
+            # self.weights_copy[k] = copy.deepcopy(self.vgg[k])
             # print(self.vgg[2].weight.data[0][0])
             total_dim = torch.zeros(size).flatten().shape[0]
             total_dim1 = torch.zeros(size1).flatten().shape[0]
@@ -142,13 +147,18 @@ class SSD(nn.Module):
             # for layer in self.base_net[start_layer_index: end_layer_index]:
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
+                if not self.run_original and start_layer_index + i == self.weight_index:
+                    x_copy = copy.deepcopy(x)
+
                 x = layer(x)
                 # print(start_layer_index + i, x.size())
-                if not self.run_original and start_layer_index + i == 11:
+                if not self.run_original and start_layer_index + i == self.weight_index:
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
                             x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512)
+                            x_dup = self.weights_copy[self.weight_index](x_copy)
+                            x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
                     elif self.attention_mode:
