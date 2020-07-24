@@ -187,6 +187,7 @@ class SSD(nn.Module):
                             # print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
                             exit()
                             x_dup = self.weights_copy[self.weight_index](x_copy)
+                            print((x_dup - layer(x_copy)).sum())
                             x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
