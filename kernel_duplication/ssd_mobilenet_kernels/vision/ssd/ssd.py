@@ -175,6 +175,10 @@ class SSD(nn.Module):
                                 print(mod)
                                 if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
                                     print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
+                                    if isinstance(mod, nn.BatchNorm2d):
+                                        print((mod.running_mean.data - self.weights_copy[self.weight_index].running_mean.data).sum())
+                                        print((mod.running_var.data - self.weights_copy[
+                                            self.weight_index].running_var.data).sum())
                                 x_copy1 = mod(x_copy1)
                                 x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
                                 print((x_copy1 - x_copy2).sum())

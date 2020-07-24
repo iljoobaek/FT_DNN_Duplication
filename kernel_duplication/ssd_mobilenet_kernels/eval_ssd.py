@@ -374,7 +374,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     results = []
-    predictor.eval()
+    # predictor.eval()
     for i in range(len(dataset)):
         if i % 100 == 0:
             print("process image", i, "of", len(dataset))
