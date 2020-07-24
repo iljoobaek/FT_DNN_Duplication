@@ -121,7 +121,7 @@ class SSD(nn.Module):
                     # x1[random_index1] = 1
                     x = x.reshape(size).to(self.device)
                     # x1 = x1.reshape(size1)
-                    m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5])).to(self.device)
+                    m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
             # print(m.sample(size).size())
                     with torch.no_grad():
                         module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
