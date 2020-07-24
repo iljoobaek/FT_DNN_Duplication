@@ -104,11 +104,11 @@ class SSD(nn.Module):
         for k in touch1:
             # print(type(self.base_net[k]))
             # print(self.base_net[k])
-            for m in self.base_net[k]:
+            for module in self.base_net[k]:
                 # print(m)
-                if isinstance(m, nn.Conv2d):
-                    print(m.weight.data.size())
-                    size = m.weight.data.size()
+                if isinstance(module, nn.Conv2d):
+                    print(module.weight.data.size())
+                    size = module.weight.data.size()
                     # size1 = m.bias.data.size()
                     total_dim = torch.zeros(size).flatten().shape[0]
                     # total_dim1 = torch.zeros(size1).flatten().shape[0]
@@ -124,7 +124,7 @@ class SSD(nn.Module):
                     m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
             # print(m.sample(size).size())
                     with torch.no_grad():
-                        m.weight.data = torch.where(x == 0, m.weight.data, m.sample(size).squeeze())
+                        module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
