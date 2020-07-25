@@ -102,6 +102,7 @@ class SSD(nn.Module):
 
     def error_injection_weights(self, error_rate):
         # error_rate = self.error
+        length = 0
         touch1 = {self.weight_index}
         for k in touch1:
             # print(type(self.base_net[k]))
@@ -113,6 +114,8 @@ class SSD(nn.Module):
                 if isinstance(module, nn.Conv2d):
                     print(module.weight.data.size())
                     size = module.weight.data.size()
+                    if size[1] == 1:
+                        length = size[0]
                     # size1 = m.bias.data.size()
                     total_dim = torch.zeros(size).flatten().shape[0]
                     # total_dim1 = torch.zeros(size1).flatten().shape[0]
@@ -134,6 +137,7 @@ class SSD(nn.Module):
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
+        return length
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         confidences = []
@@ -168,55 +172,7 @@ class SSD(nn.Module):
                         if self.duplicated:
                             x_dup = self.weights_copy[self.weight_index](x_copy)
                             x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512, x_dup=x_dup)
-                            # self.weights_copy[self.weight_index].eval()
-                            # print(x_copy)
 
-                            # x_copy1 = copy.deepcopy(x_copy)
-                            # x_copy2 = copy.deepcopy(x_copy)
-                            # x_dup = self.weights_copy[self.weight_index](x_copy)
-
-                            # print((x_copy1 - x_copy2).sum())
-                            # for ii, mod in enumerate(layer):
-                            #     print(mod)
-                            #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
-                            #         print((mod.weight.data - self.weights_copy[self.weight_index][ii].weight.data).sum())
-                            #         if isinstance(mod, nn.BatchNorm2d):
-                            #             print((mod.bias.data - self.weights_copy[self.weight_index][
-                            #                 ii].bias.data).sum())
-                            #             print((mod.running_mean.data - self.weights_copy[self.weight_index][ii].running_mean.data).sum())
-                            #             print((mod.running_var.data - self.weights_copy[
-                            #                 self.weight_index][ii].running_var.data).sum())
-                            #
-                            #     x_copy2 = self.weights_copy[self.weight_index][ii](x_copy2)
-                            #     if isinstance(mod, nn.BatchNorm2d):
-                            #         print((mod.running_mean.data - self.weights_copy[self.weight_index][
-                            #             ii].running_mean.data).sum())
-                            #         print((mod.running_var.data - self.weights_copy[
-                            #             self.weight_index][ii].running_var.data).sum())
-                            #     x_copy1 = mod(x_copy1)
-                            #     print(1)
-                            #     if isinstance(mod, nn.BatchNorm2d):
-                            #         print((mod.running_mean.data - self.weights_copy[self.weight_index][
-                            #             ii].running_mean.data).sum())
-                            #         print((mod.running_var.data - self.weights_copy[
-                            #             self.weight_index][ii].running_var.data).sum())
-                            #     # x_tmp = mod(x_copy2)
-                            #     print(2)
-                                # if isinstance(mod, nn.BatchNorm2d):
-                                #     print((mod.running_mean.data - self.weights_copy[self.weight_index][
-                                #         ii].running_mean.data).sum())
-                                #     print((mod.running_var.data - self.weights_copy[
-                                #         self.weight_index][ii].running_var.data).sum())
-
-                                # print((x_copy1 - x_copy2).sum())
-                                # print((x_tmp - x_copy2).sum())
-
-                            # print((self.weights_copy[self.weight_index](x_copy1) - layer(x_copy2)).sum())
-
-
-                            # print((x_dup - layer(x_copy)).sum())
-                            # exit()
-                            # x = (x + x_dup) / 2
                         else:
                             x = self.error_injection(x, self.error, None, is_origin=True, n=512)
                     elif self.attention_mode:

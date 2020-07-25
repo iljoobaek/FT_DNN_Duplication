@@ -41,7 +41,7 @@ parser.add_argument('--mb2_width_mult', default=1.0, type=float,
 parser.add_argument('--run_original', default=False, type=str2bool, help='train the original model')
 parser.add_argument('--duplicated', default=False, type=str2bool, help='make duplication')
 parser.add_argument('--error_rate', type=float, default=0, metavar='M', help='error_rate')
-parser.add_argument('--num_duplication', type=int, default=0, metavar='M', help='error_rate')
+parser.add_argument('--percent_duplication', type=float, default=0, metavar='M', help='error_rate')
 # parser.add_argument('--touch_layer_index', default=1, type=int,
 #                     help='how many layers to add attention, maximum 3')
 parser.add_argument('--weight_index', default=11, type=int,
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     # net.load_state_dict(torch.load(args.trained_model))
 
     net.error = args.error_rate
-    net.num_duplication = args.num_duplication
+    # net.num_duplication = args.num_duplication
     net.run_original = args.run_original
     net.duplicated = args.duplicated
 
@@ -264,7 +264,9 @@ if __name__ == '__main__':
     net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     net.weights_copy[net.weight_index].eval()
 
-    net.error_injection_weights(0.05)
+    width = net.error_injection_weights(0.05)
+    net.num_duplication = int(args.percent_duplication * width)
+    print(width)
 
     if not args.duplicated:
         print("Evaluating model without duplication...")
@@ -274,7 +276,7 @@ if __name__ == '__main__':
         # Change to evaluate the model with attention
         # device = torch.device("cuda")
 
-        num_layer_mp = {1: 512, 2: 128, 3: 256}
+        num_layer_mp = {1: width, 2: 128, 3: 256}
         # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
         # layer_mp = {1: net.fc1.weight}
         layer_mp = {1: net.conv1_attention.weight}
