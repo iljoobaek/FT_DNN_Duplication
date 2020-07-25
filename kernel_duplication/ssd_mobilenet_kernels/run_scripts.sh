@@ -2,7 +2,7 @@ NUM_DUP=0.5
 IDX=11
 MODEL=models/attention3/ssd300_COCO_9.pth
 
-for IDX in 1
+for IDX in {2..12}
 do
     echo "Layer: ${IDX}" >> result.txt
     python eval_ssd.py --error_rate 0 --percent_duplication 0 --run_original False --duplicated False --ft_type none --dataset_type voc --dataset /home/rtml/data/VOCdevkit/VOC2007 --net mb1-ssd --trained_model ${MODEL} --label_file models/voc-model-labels.txt --weight_index ${IDX}
