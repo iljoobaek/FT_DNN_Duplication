@@ -58,6 +58,7 @@ class SSD(nn.Module):
         # copy weights
         self.weight_index = 0
         self.weights_copy = {}
+        self.width = 0
 
     def error_injection(self, x, error_rate, duplicate_index, is_origin, n, x_dup=None):
         """
@@ -109,13 +110,13 @@ class SSD(nn.Module):
             # print(self.base_net[k])
             for module in self.base_net[k]:
                 print(module)
-                # if isinstance(module, nn.BatchNorm2d):
-                #     print(module)
+                if isinstance(module, nn.BatchNorm2d):
+                    length = max(module.weight.data.size(), length)
                 if isinstance(module, nn.Conv2d):
                     print(module.weight.data.size())
                     size = module.weight.data.size()
-                    if size[1] == 1:
-                        length = size[0]
+                    # if size[1] == 1:
+                    #     length = size[0]
                     # size1 = m.bias.data.size()
                     total_dim = torch.zeros(size).flatten().shape[0]
                     # total_dim1 = torch.zeros(size1).flatten().shape[0]
@@ -137,6 +138,7 @@ class SSD(nn.Module):
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
+        self.width = length
         return length
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -171,10 +173,10 @@ class SSD(nn.Module):
                         # print(self.error)
                         if self.duplicated:
                             x_dup = self.weights_copy[self.weight_index](x_copy)
-                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=512, x_dup=x_dup)
+                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=self.width, x_dup=x_dup)
 
                         else:
-                            x = self.error_injection(x, self.error, None, is_origin=True, n=512)
+                            x = self.error_injection(x, self.error, None, is_origin=True, n=self.width)
                     elif self.attention_mode:
                         # print("train attention")
                         # x = x.permute(0, 2, 3, 1)
