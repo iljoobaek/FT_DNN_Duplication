@@ -264,7 +264,7 @@ if __name__ == '__main__':
     net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     net.weights_copy[net.weight_index].eval()
 
-    net.error_injection_weights(0)
+    net.error_injection_weights(0.05)
 
     if not args.duplicated:
         print("Evaluating model without duplication...")
