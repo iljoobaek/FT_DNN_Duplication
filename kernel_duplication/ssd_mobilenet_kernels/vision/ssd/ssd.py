@@ -141,6 +141,14 @@ class SSD(nn.Module):
         self.width = length
         return length
 
+    def get_layer_width(self):
+        length = 0
+        for module in self.base_net[self.weight_index]:
+            if isinstance(module, nn.BatchNorm2d):
+                length = max(module.weight.data.size()[0], length)
+        self.width = length
+        return length
+
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         confidences = []
         locations = []

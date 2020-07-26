@@ -244,6 +244,8 @@ if __name__ == '__main__':
         sys.exit(1)  
 
     timer.start("Load Model")
+    width = net.get_layer_width()
+    net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
     net.load(args.trained_model)
     # net.load_state_dict(torch.load(args.trained_model))
 

@@ -2,7 +2,7 @@ NUM_DUP=0.5
 IDX=11
 MODEL=models/attention3/ssd300_COCO_9.pth
 
-for IDX in {1..12}
+for IDX in {2..12}
 do
     echo "Layer: ${IDX}" >> result.txt
     ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
