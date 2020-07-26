@@ -316,7 +316,7 @@ if __name__ == '__main__':
 
         net.weight_index = args.weight_index
         width = net.error_injection_weights(0)
-        net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
+        net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False).to(DEVICE)
         for name, m in net.named_modules():
             if isinstance(m, torch.nn.BatchNorm2d):
                 # print(name)
