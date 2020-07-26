@@ -8,11 +8,11 @@ python train_ssd.py --dataset_type voc \
         --pretrained_ssd models/mobilenet-v1-ssd-mp-0_675.pth \
         --checkpoint_folder models \
         --scheduler cosine \
-        --lr 0.1 \
+        --lr 0.01 \
         --batch_size 32 \
         --t_max 200 \
         --validation_epochs 50 \
-        --num_epochs 10 \
+        --num_epochs 50 \
         --run_original False \
         --use_cuda True \
         --weight_index ${IDX}
