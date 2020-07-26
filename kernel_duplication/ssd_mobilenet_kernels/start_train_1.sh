@@ -1,3 +1,6 @@
+export CUDA_VISIBLE_DEVICES=1
+IDX=12
+
 python train_ssd.py --dataset_type voc \
         --datasets /home/rtml/data/VOCdevkit/VOC2007 \
         --validation_dataset /home/rtml/data/VOCdevkit/VOC2007 \
@@ -12,4 +15,5 @@ python train_ssd.py --dataset_type voc \
         --num_epochs 10 \
         --run_original False \
         --use_cuda True \
+        --weight_index ${IDX}
 

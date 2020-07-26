@@ -5,6 +5,7 @@ import sys
 import itertools
 
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader, ConcatDataset
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
@@ -97,7 +98,8 @@ parser.add_argument('--checkpoint_folder', default='models/',
                     help='Directory for saving checkpoint models')
 
 parser.add_argument('--run_original', default=False, type=str2bool, help='train the original model')
-
+parser.add_argument('--weight_index', default=11, type=int,
+                    help='which layers to duplicate')
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -310,6 +312,10 @@ if __name__ == '__main__':
         net.attention_mode = True
         added_layers = {"fc1.weight", "fc2.weight", "conv1_attention.weight"}
         params = [{'params': (net.fc1.weight, net.fc2.weight, net.conv1_attention.weight)}]
+
+        net.weight_index = args.weight_index
+        width = net.error_injection_weights(0)
+        net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
         for name, m in net.named_modules():
             if isinstance(m, torch.nn.BatchNorm2d):
                 # print(name)
@@ -371,5 +377,5 @@ if __name__ == '__main__':
             curr_weights = net.state_dict()
             # for w in stored_weights:
             #     print(w, (curr_weights[w] - stored_weights[w]).sum())
-            torch.save(net.state_dict(), os.path.join(args.checkpoint_folder, 'attention3/ssd300_COCO_' +
-                       repr(epoch) + '.pth'))
+            torch.save(net.state_dict(), os.path.join(args.checkpoint_folder, 'attention3/' + str(args.weight_index) +
+                                                      '_ssd300_COCO_' + repr(epoch) + '.pth'))
