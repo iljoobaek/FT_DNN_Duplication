@@ -306,6 +306,7 @@ if __name__ == '__main__':
         net.init_from_pretrained_ssd(args.pretrained_ssd)
     logging.info(f'Took {timer.end("Load Model"):.2f} seconds to load the model.')
 
+    net.to(DEVICE)
     if not args.run_original:
         net.load_state_dict(torch.load(args.pretrained_ssd), strict=False)
         stored_weights = torch.load(args.pretrained_ssd)
@@ -332,8 +333,6 @@ if __name__ == '__main__':
         #         continue
         #     param.requires_grad = False
     net.run_original = args.run_original
-
-    net.to(DEVICE)
 
     criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
                              center_variance=0.1, size_variance=0.2, device=DEVICE)
