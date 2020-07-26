@@ -32,7 +32,7 @@ with open(path, 'r') as f:
         if arr[1] == "False":
             y_ori.append(float(arr[3]))
         else:
-            if arr[2] == "attention":
+            if arr[2] == "random":
                 y_att.append(float(arr[3]))
             elif arr[2] == "importance":
                 y_imp.append(float(arr[3]))
@@ -46,7 +46,7 @@ for i in range(n_plots):
     plt.subplot(1, n_plots, i + 1)
     data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x))),
             'y': np.concatenate((np.array(y_ori), np.array(y_att_all[i]), np.array(y_imp_all[i]), np.array(y_sco_all[i]))),
-            'method': ["original"] * len(x) + ["attention"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x)}
+            'method': ["original"] * len(x) + ["random"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x)}
     df = pd.DataFrame(data)
 
     ax = sns.lineplot(x='x', y='y', hue='method', data=df)
