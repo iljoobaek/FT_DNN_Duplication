@@ -123,6 +123,7 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1):
     running_regression_loss = 0.0
     running_classification_loss = 0.0
     for i, data in enumerate(loader):
+        print(i)
         images, boxes, labels = data
         images = images.to(device)
         boxes = boxes.to(device)
@@ -373,7 +374,7 @@ if __name__ == '__main__':
             net.save(model_path)
             logging.info(f"Saved model {model_path}")
         if not args.run_original:
-            curr_weights = net.state_dict()
+            # curr_weights = net.state_dict()
             # for w in stored_weights:
             #     print(w, (curr_weights[w] - stored_weights[w]).sum())
             torch.save(net.state_dict(), os.path.join(args.checkpoint_folder, 'attention3/' + str(args.weight_index) +
