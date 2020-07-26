@@ -306,9 +306,10 @@ if __name__ == '__main__':
                 weights_imp = copy.deepcopy(net.state_dict())
                 net_imp.load_state_dict(weights_imp)
                 net_imp.is_importance = True
+                net_imp.weight_index = args.weight_index
                 importance = cal_importance(net_imp)
                 net_imp.is_importance = False
-                print(len(importance))
+                print(len(importance[0]))
                 tmp = importance[0].sum(2).sum(1)
                 # tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)

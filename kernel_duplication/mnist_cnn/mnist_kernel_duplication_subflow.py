@@ -86,6 +86,45 @@ class SimpleCNN(nn.Module):
 
         return x
 
+    def error_injection_weights(self, error_rate):
+        # error_rate = self.error
+        length = 0
+        touch1 = {self.weight_index}
+        for k in touch1:
+            # print(type(self.base_net[k]))
+            # print(self.base_net[k])
+            for module in self.base_net[k]:
+                print(module)
+                if isinstance(module, nn.BatchNorm2d):
+                    length = max(module.weight.data.size()[0], length)
+                if isinstance(module, nn.Conv2d):
+                    print(module.weight.data.size())
+                    size = module.weight.data.size()
+                    # if size[1] == 1:
+                    #     length = size[0]
+                    # size1 = m.bias.data.size()
+                    total_dim = torch.zeros(size).flatten().shape[0]
+                    # total_dim1 = torch.zeros(size1).flatten().shape[0]
+            # print(total_dim)
+                    random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+                    # random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
+                    x = torch.zeros(total_dim)
+                    # x1 = torch.zeros(total_dim1)
+                    x_zero = torch.zeros(size).to(self.device)
+                    x[random_index] = 1
+                    # x1[random_index1] = 1
+                    x = x.reshape(size).to(self.device)
+                    # x1 = x1.reshape(size1)
+                    # m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
+            # print(m.sample(size).size())
+                    with torch.no_grad():
+                        # module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
+                        module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
+                        # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
+                        # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
+            # print(self.vgg[2].weight.data[0][0])
+        return length
+
     def duplication(self, x_original, x_error, duplicate_index):
         x_duplicate = x_error.clone()
         x_duplicate[:, duplicate_index[:self.num_duplication], :, :] = x_original[:, duplicate_index[:self.num_duplication], :, :]
