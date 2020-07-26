@@ -8,7 +8,7 @@ python train_ssd.py --dataset_type voc \
         --pretrained_ssd models/mobilenet-v1-ssd-mp-0_675.pth \
         --checkpoint_folder models \
         --scheduler cosine \
-        --lr 0.001 \
+        --lr 0.1 \
         --batch_size 32 \
         --t_max 200 \
         --validation_epochs 50 \

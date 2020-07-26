@@ -123,7 +123,7 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1):
     running_regression_loss = 0.0
     running_classification_loss = 0.0
     for i, data in enumerate(loader):
-        print(i)
+        # print(i)
         images, boxes, labels = data
         images = images.to(device)
         boxes = boxes.to(device)
@@ -362,7 +362,8 @@ if __name__ == '__main__':
         train(train_loader, net, criterion, optimizer,
               device=DEVICE, debug_steps=args.debug_steps, epoch=epoch)
         
-        if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
+        # if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
+        if epoch == args.num_epochs - 1:
             val_loss, val_regression_loss, val_classification_loss = test(val_loader, net, criterion, DEVICE)
             logging.info(
                 f"Epoch: {epoch}, " +
