@@ -1,7 +1,7 @@
 export CUDA_VISIBLE_DEVICES=1
 IDX=12
 
-for IDX in {1..11}
+for IDX in 12
 do
     python train_ssd.py --dataset_type voc \
             --datasets /home/rtml/data/VOCdevkit/VOC2007 \

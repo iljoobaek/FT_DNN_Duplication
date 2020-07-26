@@ -313,11 +313,11 @@ if __name__ == '__main__':
         stored_weights = torch.load(args.pretrained_ssd)
         net.attention_mode = True
         added_layers = {"fc1.weight", "fc2.weight", "conv1_attention.weight"}
-        params = [{'params': (net.fc1.weight, net.fc2.weight, net.conv1_attention.weight)}]
-
         net.weight_index = args.weight_index
         width = net.error_injection_weights(0)
         net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False).to(DEVICE)
+        params = [{'params': (net.fc1.weight, net.fc2.weight, net.conv1_attention.weight)}]
+
         for name, m in net.named_modules():
             if isinstance(m, torch.nn.BatchNorm2d):
                 # print(name)
