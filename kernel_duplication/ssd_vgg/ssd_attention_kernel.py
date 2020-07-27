@@ -143,10 +143,10 @@ class SSD(nn.Module):
 
         x = x[:, duplicate_index, :, :].flatten()
         random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
-        x[random_index] = m.sample(x[random_index].size()).squeeze()
+        # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        # x[random_index] = m.sample(x[random_index].size()).squeeze()
         # x[random_index] = m.sample(x[random_index].size()).squeeze() - 1 - x[random_index]
-        # x[random_index] = 0
+        x[random_index] = 0
         x = x.reshape(origin_shape)
         x = x[:, reverse_index, :, :]
 
@@ -300,7 +300,8 @@ class SSD(nn.Module):
                 if k == self.layer_indices[self.index]:
                     if self.error:
                         if self.duplicated:
-                            x_copy = x.clone()
+                            # x_copy = x.clone()
+                            x_copy = self.weights_copy[self.index](x_origin)
                             x = self.error_injection_new(x, self.error)
                             x_dup = self.duplication(x_copy, x, self.duplicate_index1)
                             x = (x + x_dup) / 2
