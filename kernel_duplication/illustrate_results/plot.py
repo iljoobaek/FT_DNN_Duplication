@@ -45,12 +45,12 @@ x = np.arange(1, width + 1)
 
 for i in range(n_plots):
     plt.subplot(1, n_plots, i + 1)
+    data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x), np.array(x))),
+            'y': np.concatenate((np.array(y_ori), np.array(y_att), np.array(y_imp), np.array(y_sco), np.array(y_rad))),
+            'method': ["original"] * len(x) + ["attention"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x) + ["random"] * len(x)}
     # data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x))),
-    #         'y': np.concatenate((np.array(y_ori), np.array(y_att), np.array(y_imp), np.array(y_sco), np.array(y_rad))),
-    #         'method': ["original"] * len(x) + ["attention"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x) + ["random"] * len(x)}
-    data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x))),
-            'y': np.concatenate((np.array(y_ori), np.array(y_imp), np.array(y_sco), np.array(y_rad))),
-            'method': ["original"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x) + ["random"] * len(x)}
+    #         'y': np.concatenate((np.array(y_ori), np.array(y_imp), np.array(y_sco), np.array(y_rad))),
+    #         'method': ["original"] * len(x) + ["importance"] * len(x) + ["d2nn"] * len(x) + ["random"] * len(x)}
 
     df = pd.DataFrame(data)
 

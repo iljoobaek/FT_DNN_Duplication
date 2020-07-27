@@ -228,10 +228,10 @@ class SSD(nn.Module):
         x = x.flatten()
         random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
 
-        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
-        x[random_index] = m.sample(x[random_index].size()).squeeze()
+        # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        # x[random_index] = m.sample(x[random_index].size()).squeeze()
         # x[random_index] = m.sample(x[random_index].size()).squeeze() - 1 - x[random_index]
-        # x[random_index] = 0
+        x[random_index] = 0
         x = x.reshape(origin_shape)
 
         return x
@@ -342,8 +342,7 @@ class SSD(nn.Module):
                             # else:
                             #     x = self.error_injection(x, self.error, None, is_origin=True, n=256)
                                 # exit()
-                    else:
-                        if self.attention_mode:
+                    elif self.attention_mode:
 
                             # x = x.permute(0, 2, 3, 1)
                             # if k == 2:

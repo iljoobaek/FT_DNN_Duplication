@@ -75,6 +75,8 @@ parser.add_argument('--touch_layer_index', default=1, type=int,
                     help='how many layers to add attention, maximum 3')
 parser.add_argument('--ft_type', default='attention', type=str,
                     help='Type of kernel duplication')
+parser.add_argument('--weight_index', default=1, type=int,
+                    help='which layers to duplicate')
 
 args = parser.parse_args()
 
