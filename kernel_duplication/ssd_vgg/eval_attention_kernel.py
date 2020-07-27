@@ -529,7 +529,8 @@ if __name__ == '__main__':
     # layer_id = {1: 10, 2: 3, 3: 5}
     # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
     # layer_mp = {1: net.fc7.weight, 2: net.fc3.weight, 3: net.fc5.weight}
-    layer_mp = {1: net.conv3_attention.weight, 2: net.fc3.weight, 3: net.fc5.weight}
+    # layer_mp = {1: net.conv3_attention.weight, 2: net.fc3.weight, 3: net.fc5.weight}
+    layer_mp = {1: net.conv3_attention.weight}
     # index_mp = {1: net.duplicate_index1, 2: net.duplicate_index2, 3: net.duplicate_index3}
 
     # load data
