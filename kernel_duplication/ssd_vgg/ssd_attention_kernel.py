@@ -295,7 +295,8 @@ class SSD(nn.Module):
             #     self.output.append(x)
 
             if not self.args.run_original:
-                if k in self.touch_layers[self.args.touch_layer_index]:
+                # if k in self.touch_layers[self.args.touch_layer_index]:
+                if k == self.layer_indices[self.index]:
                     if self.error:
                         if self.duplicated:
                             x_copy = x.clone()

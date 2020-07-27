@@ -1398,3 +1398,7 @@ touch layer = 1 (22nd), new saved weight: 77.43%, re-trained attention + self co
 0.96|True|random|0.4563442334380975
 0.98|True|random|0.341301635945021
 1.0|True|random|0.26542811125021804
+
+
+//////////////////////////////////////
+DEBUG

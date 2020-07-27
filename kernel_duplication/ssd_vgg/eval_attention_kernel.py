@@ -521,6 +521,7 @@ if __name__ == '__main__':
     num_classes = len(labelmap) + 1                      # +1 for background
     net = build_ssd(args, 'test', 300, num_classes)            # initialize SSD
     net.load_state_dict(torch.load(args.trained_model), strict=False)
+    net.index = args.weight_index
 
     # num_layer_mp = {1: 64, 2: 128, 3:256}
     num_layer_mp = {1: net.layer_width[args.weight_index], 2: 128, 3: 256}
@@ -626,8 +627,8 @@ if __name__ == '__main__':
                 if k == 3:
                     net.duplicate_index3 = final.indices[0]
 
-
-        net.attention_mode = True
+        net.duplicated = True
+        # net.attention_mode = True
 
     net.error = args.error_rate
     net.eval()
