@@ -546,7 +546,7 @@ if __name__ == '__main__':
                            VOCAnnotationTransform())
     # for name, p in net.named_parameters():
     #     print(name)
-    # net.error_injection_weights(0.05)
+
     if not args.attention_mode:
         print("Evaluating model without duplication...")
         # net.attention_mode = True
@@ -658,6 +658,7 @@ if __name__ == '__main__':
 
     net.weights_copy[args.weight_index] = copy.deepcopy(net.vgg[net.layer_indices[args.weight_index]])
     net.weights_copy[args.weight_index].eval()
+    net.error_injection_weights(0.05)
     # evaluation
     test_net(args.save_folder, net, args.cuda, dataset,
              BaseTransform(net.size, dataset_mean), args.top_k, 300,

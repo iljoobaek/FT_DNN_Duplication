@@ -192,31 +192,34 @@ class SSD(nn.Module):
 
     def error_injection_weights(self, error_rate):
         # error_rate = self.error
-        touch1 = {2}
+        touch1 = {self.layer_indices[self.index]}
         touch2 = {2, 5}
         touch3 = {2, 5, 10}
         for k in touch1:
             size = self.vgg[k].weight.data.size()
             size1 = self.vgg[k].bias.data.size()
-            self.weights_copy[k] = copy.deepcopy(self.vgg[k])
+            # self.weights_copy[k] = copy.deepcopy(self.vgg[k])
             # print(self.vgg[2].weight.data[0][0])
             total_dim = torch.zeros(size).flatten().shape[0]
             total_dim1 = torch.zeros(size1).flatten().shape[0]
             # print(total_dim)
             random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
             random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
-            x = torch.zeros(total_dim)
-            x1 = torch.zeros(total_dim1)
+            x = torch.zeros(total_dim).cuda()
+            x1 = torch.zeros(total_dim1).cuda()
             x[random_index] = 1
             x1[random_index1] = 1
             x = x.reshape(size)
             x1 = x1.reshape(size1)
-            m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
+            # m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
             # print(m.sample(size).size())
             with torch.no_grad():
-                self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, m.sample(size).squeeze())
-                self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, m.sample(size1).squeeze())
-                # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
+                # self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, m.sample(size).squeeze())
+                # self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, m.sample(size1).squeeze())
+                self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, torch.zeros(size).cuda())
+                self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, torch.zeros(size1).cuda())
+
+            # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
 
     def error_injection_new(self, x, error_rate):

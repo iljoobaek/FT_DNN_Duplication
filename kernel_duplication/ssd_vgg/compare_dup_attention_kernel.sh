@@ -7,7 +7,7 @@ IDX=5
 #python eval_attention_kernel.py --attention_mode False --error_rate 0.1 --touch_layer_index 1 --weight_index ${IDX}
 #python eval_attention_kernel.py --attention_mode False --error_rate 0.3 --touch_layer_index 1 --weight_index ${IDX}
 #python eval_attention_kernel.py --attention_mode False --error_rate 0.5 --touch_layer_index 1 --weight_index ${IDX}
-python eval_attention_kernel.py --attention_mode False --error_rate 0.7 --touch_layer_index 1 --weight_index ${IDX}
+#python eval_attention_kernel.py --attention_mode False --error_rate 0.7 --touch_layer_index 1 --weight_index ${IDX}
 #python eval_attention_kernel.py --attention_mode False --error_rate 0.9 --touch_layer_index 1 --weight_index ${IDX}
 #python eval_attention_kernel.py --attention_mode False --error_rate 0.92 --touch_layer_index 1 --weight_index ${IDX}
 #python eval_attention_kernel.py --attention_mode False --error_rate 0.94 --touch_layer_index 1 --weight_index ${IDX}
