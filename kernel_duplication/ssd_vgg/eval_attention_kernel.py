@@ -497,16 +497,18 @@ def weight_sum_eval(model):
         # print(name, weights[name + '.weight'].size())
         if isinstance(m, nn.Conv2d):
             names.append(name)
+
             print(name, weights[name + '.weight'].size())
             # output input H W
-            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
-        elif isinstance(m, nn.Linear):
-            names.append(name)
+            if name == 'vgg.' + str(model.layer_width[args.weight_index + 1]):
+                evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+        # elif isinstance(m, nn.Linear):
+        #     names.append(name)
             # print(name, weights[name + '.weight'].size())
             # output input
-            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=0))
-        elif isinstance(m, nn.BatchNorm2d):
-            print(name)
+            # evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=0))
+        # elif isinstance(m, nn.BatchNorm2d):
+        #     print(name)
         #if evaluation: print(names[-1], type(m), evaluation[-1].size())
     # for i in range(len(names)):
     #     print(names[i], evaluation[i].size())
@@ -521,13 +523,13 @@ if __name__ == '__main__':
     net.load_state_dict(torch.load(args.trained_model), strict=False)
 
     # num_layer_mp = {1: 64, 2: 128, 3:256}
-    num_layer_mp = {1: 512, 2: 128, 3: 256}
+    num_layer_mp = {1: net.layer_width[args.weight_index], 2: 128, 3: 256}
     # layer_id = {1: 2, 2: 3, 3: 5}
-    layer_id = {1: 10, 2: 3, 3: 5}
+    # layer_id = {1: 10, 2: 3, 3: 5}
     # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
     # layer_mp = {1: net.fc7.weight, 2: net.fc3.weight, 3: net.fc5.weight}
     layer_mp = {1: net.conv3_attention.weight, 2: net.fc3.weight, 3: net.fc5.weight}
-    index_mp = {1: net.duplicate_index1, 2: net.duplicate_index2, 3: net.duplicate_index3}
+    # index_mp = {1: net.duplicate_index1, 2: net.duplicate_index2, 3: net.duplicate_index3}
 
     # load data
     dataset = VOCDetection(args.voc_root, [('2007', set_type)],
@@ -579,7 +581,8 @@ if __name__ == '__main__':
                 net_imp.is_importance = True
                 importance = cal_importance(net_imp, data_loader)
                 net_imp.is_importance = False
-                tmp = importance[layer_id[k]].sum(2).sum(1)
+                # tmp = importance[layer_id[k]].sum(2).sum(1)
+                tmp = importance[0].sum(2).sum(1)
                 # print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
@@ -596,7 +599,8 @@ if __name__ == '__main__':
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 weight_sum, _ = weight_sum_eval(net)
                 # tmp = torch.sum(layer_mp[k], axis=0)
-                tmp = weight_sum[layer_id[k]]
+                # tmp = weight_sum[layer_id[k]]
+                tmp = weight_sum[0]
                 # print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)

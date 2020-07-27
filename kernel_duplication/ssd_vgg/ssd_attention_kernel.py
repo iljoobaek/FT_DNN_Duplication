@@ -81,26 +81,29 @@ class SSD(nn.Module):
         # 31:512*19 ->(conv) 32:1024*19 ->(relu) 33:1024*19 ->(conv) 34:1024*19 ->(relu)
         # 0:1024*19 ->(conv+relu) 1:256*19 ->(conv+relu) 2:512*10 ->(conv+relu) 3:128*10 ->(conv+relu) 4:256*5
         # ->(conv+relu) 5:128*5 ->(conv+relu) 6:256*3 ->(conv+relu) 7:128*3
+        self.layer_indices = [0, 2, 5, 7, 10, 12, 14, 17, 19, 21, 24, 26, 28, 31, 33]
+        self.layer_width = [64, 64, 128, 128, 256, 256, 256, 512, 512, 512, 512, 512, 512, 1024, 1024]
+        self.index = 0
 
         # Layer learns to scale the l2 normalized features from conv4_3
         self.L2Norm = L2Norm(512, 20)
         self.extras = nn.ModuleList(extras)
 
-        self.fc1 = nn.Linear(64, 32, bias=False) #32
-        self.fc2 = nn.Linear(32, 64, bias=False)
+        # self.fc1 = nn.Linear(64, 32, bias=False) #32
+        # self.fc2 = nn.Linear(32, 64, bias=False)
 
-        self.conv1_attention = nn.Conv2d(64, 128, 1, bias=False)  # 32
-        self.conv2_attention = nn.Conv2d(128, 64, 1, bias=False)
+        # self.conv1_attention = nn.Conv2d(64, 128, 1, bias=False)  # 32
+        # self.conv2_attention = nn.Conv2d(128, 64, 1, bias=False)
 
-        self.fc3 = nn.Linear(128, 32, bias=False)
-        self.fc4 = nn.Linear(32, 128, bias=False)
+        # self.fc3 = nn.Linear(128, 32, bias=False)
+        # self.fc4 = nn.Linear(32, 128, bias=False)
 
-        self.fc5 = nn.Linear(256, 32, bias=False)
-        self.fc6 = nn.Linear(32, 256, bias=False)
+        # self.fc5 = nn.Linear(256, 32, bias=False)
+        # self.fc6 = nn.Linear(32, 256, bias=False)
 
         # self.fc7 = nn.Linear(512, 1024, bias=False)
         # self.fc8 = nn.Linear(1024, 512, bias=False)
-        self.fc7 = nn.Linear(512, 512, bias=False)
+        # self.fc7 = nn.Linear(512, 512, bias=False)
 
         self.conv3_attention = nn.Conv2d(512, 512, 3, 1, 1, groups=512, bias=False)
 
