@@ -276,7 +276,8 @@ class SSD(nn.Module):
         # apply vgg up to conv4_3 relu
         for k in range(23):
 
-            # x_origin = x.detach().clone()
+            if k == self.layer_indices[self.index]:
+                x_origin = x.detach().clone()
             # print(k, x.size())
             x = self.vgg[k](x)
             # if k in {2, 5, 10}:

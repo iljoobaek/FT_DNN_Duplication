@@ -456,6 +456,7 @@ def cal_importance(model, train_data):
     :param train_data:
     :return:
     """
+    model = model.cuda()
     importance_list = []
     cfg = voc
     for batch_idx, (data, targets) in enumerate(train_data):
@@ -585,6 +586,11 @@ if __name__ == '__main__':
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(device)
                 net_imp = build_ssd(args, 'train', 300, num_classes)
                 weights_imp = copy.deepcopy(net.state_dict())
+                net_imp.conv3_attention = nn.Conv2d(net.layer_width[args.weight_index],
+                                                    net.layer_width[args.weight_index],
+                                                    3, 1, 1,
+                                                    groups=net.layer_width[args.weight_index],
+                                                    bias=False)
                 net_imp.load_state_dict(weights_imp)
                 net_imp.index = args.weight_index
                 net_imp.is_importance = True
