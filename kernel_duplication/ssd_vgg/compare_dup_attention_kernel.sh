@@ -36,7 +36,7 @@ python eval_attention_kernel.py --attention_mode True --error_rate 0.1 --touch_l
 #python eval_attention_kernel.py --attention_mode True --error_rate 0.98 --touch_layer_index 1 --ft_type importance
 #python eval_attention_kernel.py --attention_mode True --error_rate 1 --touch_layer_index 1 --ft_type importance
 ##
-python eval_attention_kernel.py --attention_mode True --error_rate 0.1 --touch_layer_index 1 --ft_type d2nn
+#python eval_attention_kernel.py --attention_mode True --error_rate 0.1 --touch_layer_index 1 --ft_type d2nn
 #python eval_attention_kernel.py --attention_mode True --error_rate 0.3 --touch_layer_index 1 --ft_type d2nn
 #python eval_attention_kernel.py --attention_mode True --error_rate 0.5 --touch_layer_index 1 --ft_type d2nn
 #python eval_attention_kernel.py --attention_mode True --error_rate 0.7 --touch_layer_index 1 --ft_type d2nn
