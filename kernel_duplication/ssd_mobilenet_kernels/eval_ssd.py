@@ -267,7 +267,7 @@ if __name__ == '__main__':
     net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     net.weights_copy[net.weight_index].eval()
 
-    width = net.error_injection_weights(0.05)
+    width = net.error_injection_weights(0.1)
     net.num_duplication = int(args.percent_duplication * width)
     print(width)
 
