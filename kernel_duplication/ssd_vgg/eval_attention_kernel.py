@@ -77,6 +77,8 @@ parser.add_argument('--ft_type', default='attention', type=str,
                     help='Type of kernel duplication')
 parser.add_argument('--weight_index', default=1, type=int,
                     help='which layers to duplicate')
+parser.add_argument('--weight_error', default=0.0, type=float,
+                    help='error rate of weight')
 
 args = parser.parse_args()
 
@@ -658,7 +660,7 @@ if __name__ == '__main__':
 
     net.weights_copy[args.weight_index] = copy.deepcopy(net.vgg[net.layer_indices[args.weight_index]])
     net.weights_copy[args.weight_index].eval()
-    net.error_injection_weights(0.05)
+    net.error_injection_weights(args.weight_error)
     # evaluation
     test_net(args.save_folder, net, args.cuda, dataset,
              BaseTransform(net.size, dataset_mean), args.top_k, 300,
