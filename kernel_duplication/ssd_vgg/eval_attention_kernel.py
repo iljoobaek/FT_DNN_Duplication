@@ -493,7 +493,7 @@ def weight_sum_eval(model):
     names = []
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
-        # print(name)
+        print(name)
         # print(name, weights[name + '.weight'].size())
         if isinstance(m, nn.Conv2d):
             names.append(name)
@@ -510,7 +510,7 @@ def weight_sum_eval(model):
         #if evaluation: print(names[-1], type(m), evaluation[-1].size())
     # for i in range(len(names)):
     #     print(names[i], evaluation[i].size())
-    print(names[10], evaluation[10].size())
+    # print(names[10], evaluation[10].size())
     return evaluation, names
 
 

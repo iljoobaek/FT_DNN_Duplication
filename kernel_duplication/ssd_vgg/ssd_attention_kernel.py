@@ -61,6 +61,7 @@ class SSD(nn.Module):
         self.duplicate_index2 = None
         self.duplicate_index3 = None
         self.attention_mode = False
+        self.duplicated = False
         # self.touch_layers = {1: {2}, 2: {2,5}, 3: {2, 5, 10}}
         self.touch_layers = {1: {22}, 2: {3, 6}, 3: {3, 6, 11}}
         self.weights_copy = {}
@@ -286,109 +287,26 @@ class SSD(nn.Module):
             #     exit()
             # print(x[0][0][0][:100])
 
-            if self.is_importance and k in self.index_add_output:
-                x.retain_grad()
-                self.output.append(x)
+            # if self.is_importance and k in self.index_add_output:
+            #     x.retain_grad()
+            #     self.output.append(x)
 
-            if self.args.run_original:
-                pass
-            else:
+            if not self.args.run_original:
                 if k in self.touch_layers[self.args.touch_layer_index]:
                     if self.error:
-                        if self.attention_mode:
-                            # if k == 2:
-                            #     x_copy = self.weights_copy[k](x_origin)
-                            #     # x_dup = self.duplication(x_copy, x, self.duplicate_index1)
-                            #     x = (x_copy + x) / 2
-                            # if k == 3:
-                                # print(x.sum(3).sum(2).sum(0))
-                                # x = self.error_injection_1(x, self.error, self.duplicate_index1, is_origin=False, n=64)
-                                # print(x.sum(3).sum(2).sum(0))
-                                # exit()
-                            # elif k == 5:
-                            # elif k == 6:
-                            #     x = self.error_injection_1(x, self.error, self.duplicate_index2, is_origin=False, n=128)
-                            # else:
-                            #     x = self.error_injection_1(x, self.error, self.duplicate_index3, is_origin=False, n=256)
+                        if self.duplicated:
                             x_copy = x.clone()
-                            # if k == 2:
-                            if k == 22:
-                                x = self.error_injection_new(x, self.error)
-                                x_dup = self.duplication(x_copy, x, self.duplicate_index1)
-                            # elif k == 5:
-                            elif k == 6:
-                                x = self.error_injection_new(x, self.error)
-                                x_dup = self.duplication(x_copy, x, self.duplicate_index2)
-                            else:
-                                x = self.error_injection_new(x, self.error)
-                                x_dup = self.duplication(x_copy, x, self.duplicate_index3)
+                            x = self.error_injection_new(x, self.error)
+                            x_dup = self.duplication(x_copy, x, self.duplicate_index1)
                             x = (x + x_dup) / 2
                         else:
-                            # x = x
-                            if k == 22:
-                                x = self.error_injection(x, self.error, None, is_origin=True, n=512)
-                            # if k == 2:
-                            # if k == 3:
-                            #     # print(x.sum(3).sum(2).sum(0).sum())
-                            #     # print(type(self.vgg[k]))
-                            #     # print(x[0][0][1])
-                            #     x = self.error_injection(x, self.error, None, is_origin=True, n=64)
-                            #     # print(x.sum(3).sum(2).sum(0).sum())
-                            #     # print(x[0][0][1])
-                            #     # exit()
-                            # # elif k == 5:
-                            # elif k == 6:
-                            #     x = self.error_injection(x, self.error, None, is_origin=True, n=128)
-                            # else:
-                            #     x = self.error_injection(x, self.error, None, is_origin=True, n=256)
-                                # exit()
+                            x = self.error_injection(x, self.error, None, is_origin=True, n=512)
+
                     elif self.attention_mode:
-
-                            # x = x.permute(0, 2, 3, 1)
-                            # if k == 2:
-                            # if k == 3:
-                            #     # x = self.fc1(x)
-                            #     x = self.conv1_attention(x)
-                            # print(k)
-                            if k == 22:
-                                # print("fc7")
-                                # x = self.fc7(x)
-                                x = self.conv3_attention(x)
-                                # x = self.mask(x)
-                                # print(type(x), type(self.mask))
-                                # print(self.mask[:8])
-                                # self.mask = self.mask - self.mask.detach().clone().min()
-                                # self.mask /= self.mask.detach().clone().sum()
-                                # self.mask *= 256
-                                # not get trained?
-                                # x = self.mask * x - self.mask.detach().clone().min() * x
-                                # x = x / (self.mask.detach().clone() - self.mask.detach().clone().min()).sum() * 256
-                                # tmp = self.mask.detach().clone() - self.mask.detach().clone().min()
-                                # tmp /= tmp.sum()
-                                # tmp *= 256
-                                # print(tmp[:4])
-                                # x = self.mask * x
-
-                            # elif k == 5:
-                            # elif k == 6:
-                            #     x = self.fc3(x)
-                            # else:
-                            #     x = self.fc5(x)
-                            # x = nn.Tanh()(x)
-                            # if k == 2:
-                            # if k == 3:
-                            #     # x = self.fc2(x)
-                            #     x = self.conv2_attention(x)
-                            # if k == 22:
-                                # print("fc8")
-                                # x = self.fc8(x)
-                            # elif k == 5:
-                            # elif k == 6:
-                            #     x = self.fc4(x)
-                            # else:
-                            #     x = self.fc6(x)
-                            # x = x.permute(0, 3, 1, 2)
-
+                        x = self.conv3_attention(x)
+                    elif self.is_importance:
+                        x.retain_grad()
+                        self.output.append(x)
 
         s = self.L2Norm(x)
         sources.append(s)
