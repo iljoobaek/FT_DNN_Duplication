@@ -493,11 +493,11 @@ def weight_sum_eval(model):
     names = []
     # need to find the connection between conv and fc
     for name, m in model.named_modules():
-        print(name)
+        # print(name)
         # print(name, weights[name + '.weight'].size())
         if isinstance(m, nn.Conv2d):
             names.append(name)
-            # print(name, weights[name + '.weight'].size())
+            print(name, weights[name + '.weight'].size())
             # output input H W
             evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         elif isinstance(m, nn.Linear):
