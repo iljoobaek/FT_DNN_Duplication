@@ -63,7 +63,7 @@ class SSD(nn.Module):
         self.attention_mode = False
         self.duplicated = False
         # self.touch_layers = {1: {2}, 2: {2,5}, 3: {2, 5, 10}}
-        self.touch_layers = {1: {22}, 2: {3, 6}, 3: {3, 6, 11}}
+        # self.touch_layers = {1: {22}, 2: {3, 6}, 3: {3, 6, 11}}
         self.weights_copy = {}
 
         self.output = []
@@ -267,11 +267,11 @@ class SSD(nn.Module):
         sources = list()
         loc = list()
         conf = list()
-        if self.is_importance:
-            self.output = []
-            x = nn.Parameter(x, requires_grad=True)
-            x.retain_grad()
-            self.output.append(x)
+        # if self.is_importance:
+        #     self.output = []
+        #     x = nn.Parameter(x, requires_grad=True)
+        #     x.retain_grad()
+        #     self.output.append(x)
 
         # apply vgg up to conv4_3 relu
         for k in range(23):

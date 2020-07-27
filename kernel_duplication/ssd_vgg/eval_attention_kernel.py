@@ -500,7 +500,7 @@ def weight_sum_eval(model):
 
             # print(name, weights[name + '.weight'].size())
             # output input H W
-            if name == 'vgg.' + str(model.layer_width[args.weight_index + 1]):
+            if name == 'vgg.' + str(model.layer_indices[args.weight_index + 1]):
                 evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         # elif isinstance(m, nn.Linear):
         #     names.append(name)
@@ -523,6 +523,11 @@ if __name__ == '__main__':
     net.load_state_dict(torch.load(args.trained_model), strict=False)
     net.index = args.weight_index
     net.num_duplication = int(net.layer_width[args.weight_index] * 0.5)
+    net.conv3_attention = nn.Conv2d(net.layer_width[args.weight_index],
+                                    net.layer_width[args.weight_index],
+                                    3, 1, 1,
+                                    groups=net.layer_width[args.weight_index],
+                                    bias=False)
 
     # num_layer_mp = {1: 64, 2: 128, 3:256}
     num_layer_mp = {1: net.layer_width[args.weight_index], 2: 128, 3: 256}
@@ -642,7 +647,11 @@ if __name__ == '__main__':
     #                        VOCAnnotationTransform())
     if args.cuda:
         net = net.cuda()
+        net.conv3_attention = net.conv3_attention.cuda()
         cudnn.benchmark = True
+
+    net.weights_copy[args.weight_index] = copy.deepcopy(net.vgg[net.layer_indices[args.weight_index]])
+    net.weights_copy[args.weight_index].eval()
     # evaluation
     test_net(args.save_folder, net, args.cuda, dataset,
              BaseTransform(net.size, dataset_mean), args.top_k, 300,
