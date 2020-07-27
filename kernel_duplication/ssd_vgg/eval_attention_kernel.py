@@ -496,9 +496,9 @@ def weight_sum_eval(model):
         # print(name)
         # print(name, weights[name + '.weight'].size())
         if isinstance(m, nn.Conv2d):
-            names.append(name)
+            # names.append(name)
 
-            print(name, weights[name + '.weight'].size())
+            # print(name, weights[name + '.weight'].size())
             # output input H W
             if name == 'vgg.' + str(model.layer_width[args.weight_index + 1]):
                 evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
@@ -522,6 +522,7 @@ if __name__ == '__main__':
     net = build_ssd(args, 'test', 300, num_classes)            # initialize SSD
     net.load_state_dict(torch.load(args.trained_model), strict=False)
     net.index = args.weight_index
+    net.num_duplication = int(net.layer_width[args.weight_index] * 0.5)
 
     # num_layer_mp = {1: 64, 2: 128, 3:256}
     num_layer_mp = {1: net.layer_width[args.weight_index], 2: 128, 3: 256}
@@ -580,6 +581,7 @@ if __name__ == '__main__':
                 net_imp = build_ssd(args, 'train', 300, num_classes)
                 weights_imp = copy.deepcopy(net.state_dict())
                 net_imp.load_state_dict(weights_imp)
+                net_imp.index = args.weight_index
                 net_imp.is_importance = True
                 importance = cal_importance(net_imp, data_loader)
                 net_imp.is_importance = False

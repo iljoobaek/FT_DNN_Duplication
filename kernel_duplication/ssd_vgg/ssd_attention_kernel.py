@@ -304,7 +304,7 @@ class SSD(nn.Module):
                             x_dup = self.duplication(x_copy, x, self.duplicate_index1)
                             x = (x + x_dup) / 2
                         else:
-                            x = self.error_injection(x, self.error, None, is_origin=True, n=512)
+                            x = self.error_injection(x, self.error, None, is_origin=True, n=self.layer_width[self.index])
 
                     elif self.attention_mode:
                         x = self.conv3_attention(x)
