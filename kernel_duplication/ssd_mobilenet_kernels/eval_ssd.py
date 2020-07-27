@@ -267,7 +267,7 @@ if __name__ == '__main__':
     net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     net.weights_copy[net.weight_index].eval()
 
-    width = net.error_injection_weights(0.05)
+    width = net.error_injection_weights(0.1)
     net.num_duplication = int(args.percent_duplication * width)
     print(width)
 
@@ -307,6 +307,7 @@ if __name__ == '__main__':
                 index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
                 net_imp = create_mobilenetv1_ssd(len(class_names))
                 weights_imp = copy.deepcopy(net.state_dict())
+                net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
                 net_imp.load_state_dict(weights_imp)
                 net_imp.is_importance = True
                 net_imp.weight_index = args.weight_index

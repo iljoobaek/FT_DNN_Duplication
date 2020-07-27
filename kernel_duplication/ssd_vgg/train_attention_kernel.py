@@ -67,6 +67,8 @@ parser.add_argument('--trained_model', default='weights/ssd300_mAP_77.43_v2.pth'
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--run_original', default=True, type=str2bool,
 					help='train the original model')
+parser.add_argument('--weight_index', default=1, type=int,
+                    help='which layers to pay attention')
 args = parser.parse_args()
 
 
@@ -116,10 +118,17 @@ def train():
     if not args.run_original:
         net.load_state_dict(torch.load(args.trained_model), strict=False)
         net.attention_mode = True
+        net.index = args.weight_index
+        net.conv3_attention = nn.Conv2d(net.layer_width[args.weight_index],
+                                        net.layer_width[args.weight_index],
+                                        3, 1, 1,
+                                        groups=net.layer_width[args.weight_index],
+                                        bias=False)
         # added_layers = {"fc1.weight", "fc2.weight","fc3.weight", "fc4.weight","fc5.weight", "fc6.weight"}
-        added_layers = {"fc1.weight", "fc2.weight", "fc3.weight", "fc4.weight", "fc5.weight", "fc6.weight",
-                        "conv1_attention.weight", "conv2_attention.weight", "fc7.weight", "fc8.weight", "mask",
-                        "conv3_attention.weight"}
+        # added_layers = {"fc1.weight", "fc2.weight", "fc3.weight", "fc4.weight", "fc5.weight", "fc6.weight",
+        #                 "conv1_attention.weight", "conv2_attention.weight", "fc7.weight", "fc8.weight", "mask",
+        #                 "conv3_attention.weight"}
+        added_layers = {"conv3_attention.weight"}
         for name, param in net.named_parameters():
 
             if name in added_layers:
@@ -142,6 +151,7 @@ def train():
 
     if args.cuda:
         net = net.cuda()
+        net.conv3_attention = net.conv3_attention.cuda()
 
     if not args.resume and args.run_original:
         print('Initializing weights...')
