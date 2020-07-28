@@ -275,6 +275,7 @@ if __name__ == '__main__':
 
     # net.error_injection_weights(0.1)
     net.error_injection_weights_all(0.05)
+    net.percentage = args.percent_duplication
     # net.num_duplication = int(args.percent_duplication * width)
     # print(width)
 

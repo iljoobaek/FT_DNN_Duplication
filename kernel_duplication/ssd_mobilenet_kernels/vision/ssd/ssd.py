@@ -62,6 +62,7 @@ class SSD(nn.Module):
         self.width = 0
         self.all_width = [64, 128, 128, 256, 256, 512, 512, 512, 512, 512, 512, 1024]
         self.all_duplication_indices = {}
+        self.percentage = 0.5
 
     def error_injection(self, x, error_rate, duplicate_index, is_origin, n, x_dup=None):
         """
@@ -74,7 +75,8 @@ class SSD(nn.Module):
         device = torch.device("cuda")
         origin_shape = x.shape
         total_dim = x[:, :n, :, :].flatten().shape[0]
-        change_dim = x[:, :self.num_duplication, :, :].flatten().shape[0]
+        # change_dim = x[:, :self.num_duplication, :, :].flatten().shape[0]
+        change_dim = x[:, :int(n * self.percentage), :, :].flatten().shape[0]
         if is_origin:
             duplicate_index = torch.arange(n).type(torch.long).to(device)
         index = torch.arange(n).type(torch.long).to(device)
@@ -206,10 +208,13 @@ class SSD(nn.Module):
                         if self.duplicated:
                             # x_dup = self.weights_copy[self.weight_index](x_copy) # duplicated kernel
                             x_dup = self.weights_copy[start_layer_index + i](x_copy)
-                            x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=self.width, x_dup=x_dup)
+                            # x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=self.width, x_dup=x_dup)
+                            x = self.error_injection(x, self.error, self.all_duplication_indices[start_layer_index + i],
+                                                     is_origin=False, n=self.all_width[start_layer_index + i - 1],
+                                                     x_dup=x_dup)
 
                         else:
-                            x = self.error_injection(x, self.error, None, is_origin=True, n=self.width)
+                            x = self.error_injection(x, self.error, None, is_origin=True, n=self.all_width[start_layer_index + i - 1])
                     elif self.attention_mode:
                         # print("train attention")
                         # x = x.permute(0, 2, 3, 1)
