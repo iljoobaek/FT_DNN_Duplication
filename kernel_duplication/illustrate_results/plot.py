@@ -9,7 +9,7 @@ path = "results_map_vs_layer.txt"
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 1]
 width = 0
-error = 0.5
+error = 0.9
 
 # y_att_all = []
 # y_imp_all = []

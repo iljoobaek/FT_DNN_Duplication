@@ -58,7 +58,10 @@ class SSD(nn.Module):
         # copy weights
         self.weight_index = 0
         self.weights_copy = {}
+        self.all_layer_indices = range(1, 13)
         self.width = 0
+        self.all_width = [64, 128, 128, 256, 256, 512, 512, 512, 512, 512, 512, 1024]
+        self.all_duplication_indices = {}
 
     def error_injection(self, x, error_rate, duplicate_index, is_origin, n, x_dup=None):
         """
@@ -101,17 +104,35 @@ class SSD(nn.Module):
 
         return x
 
+    def _kernel_error_injection(self, error_rate, unit):
+        for module in unit:
+            if isinstance(module, nn.Conv2d):
+                size = module.weight.data.size()
+                total_dim = torch.zeros(size).flatten().shape[0]
+                random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+                x = torch.zeros(total_dim)
+                x_zero = torch.zeros(size).to(self.device)
+                x[random_index] = 1
+                x = x.reshape(size).to(self.device)
+                with torch.no_grad():
+                    module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
+
+    def error_injection_weights_all(self, error_rate):
+        print("Inject error to all layers")
+        for k in self.all_layer_indices:
+            self._kernel_error_injection(error_rate, self.base_net[k])
+
     def error_injection_weights(self, error_rate):
         # error_rate = self.error
-        length = 0
+        # length = 0
         touch1 = {self.weight_index}
         for k in touch1:
             # print(type(self.base_net[k]))
             # print(self.base_net[k])
             for module in self.base_net[k]:
                 print(module)
-                if isinstance(module, nn.BatchNorm2d):
-                    length = max(module.weight.data.size()[0], length)
+                # if isinstance(module, nn.BatchNorm2d):
+                #     length = max(module.weight.data.size()[0], length)
                 if isinstance(module, nn.Conv2d):
                     print(module.weight.data.size())
                     size = module.weight.data.size()
@@ -138,8 +159,8 @@ class SSD(nn.Module):
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
-        self.width = length
-        return length
+        # self.width = length
+        # return length
 
     def get_layer_width(self):
         length = 0
@@ -169,18 +190,22 @@ class SSD(nn.Module):
             # for layer in self.base_net[start_layer_index: end_layer_index]:
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
-                if not self.run_original and start_layer_index + i == self.weight_index:
+                # if not self.run_original and start_layer_index + i == self.weight_index:
+                if not self.run_original and 0 < start_layer_index + i < 13:
+
                     # x_copy = copy.deepcopy(x)
                     x_copy = x.detach().clone()
 
-                x = layer(x)
+                x = layer(x) # original kernel
                 # x_tmp = x.detach().clone()
                 # print(start_layer_index + i, x.size())
-                if not self.run_original and start_layer_index + i == self.weight_index:
+                # if not self.run_original and start_layer_index + i == self.weight_index:
+                if not self.run_original and 0 < start_layer_index + i < 13:
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
-                            x_dup = self.weights_copy[self.weight_index](x_copy)
+                            # x_dup = self.weights_copy[self.weight_index](x_copy) # duplicated kernel
+                            x_dup = self.weights_copy[start_layer_index + i](x_copy)
                             x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=self.width, x_dup=x_dup)
 
                         else:

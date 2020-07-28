@@ -44,7 +44,7 @@ parser.add_argument('--error_rate', type=float, default=0, metavar='M', help='er
 parser.add_argument('--percent_duplication', type=float, default=0, metavar='M', help='error_rate')
 # parser.add_argument('--touch_layer_index', default=1, type=int,
 #                     help='how many layers to add attention, maximum 3')
-parser.add_argument('--weight_index', default=11, type=int,
+parser.add_argument('--weight_index', default=1, type=int,
                     help='which layers to duplicate')
 parser.add_argument('--ft_type', default='none', type=str, help='Type of kernel duplication')
 args = parser.parse_args()
@@ -186,12 +186,15 @@ def weight_sum_eval(model):
     evaluation = []
     names = []
     # need to find the connection between conv and fc
-    for name, m in model.named_modules():
+    for i in model.all_layer_indices:
+        evaluation.append(weights['base_net.' + str(i + 1) + '.3' + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+
+    # for name, m in model.named_modules():
         # print(name, m)
         # if name == 'base_net.12.3':
-        if name == 'base_net.' + str(model.weight_index + 1) + '.3':
-            names.append(name)
-            evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+        # if name == 'base_net.' + str(model.weight_index + 1) + '.3':
+        #     names.append(name)
+        #     evaluation.append(weights[name + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
         # if name == 'base_net.2.0':
             # print(weights[name + '.weight'].size())
             # names.append(name)
@@ -244,9 +247,9 @@ if __name__ == '__main__':
         sys.exit(1)  
 
     timer.start("Load Model")
-    net.weight_index = args.weight_index
-    width = net.get_layer_width()
-    net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
+    # net.weight_index = args.weight_index
+    # width = net.get_layer_width()
+    # net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
     net.load(args.trained_model)
     # net.load_state_dict(torch.load(args.trained_model))
 
@@ -263,13 +266,17 @@ if __name__ == '__main__':
 
     net = net.to(DEVICE)
 
-    net.weight_index = args.weight_index
-    net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
-    net.weights_copy[net.weight_index].eval()
+    # net.weight_index = args.weight_index
+    # net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
+    # net.weights_copy[net.weight_index].eval()
+    for i in net.all_layer_indices:
+        net.weights_copy[i] = copy.deepcopy(net.base_net[i])
+        net.weights_copy[i].eval()
 
-    width = net.error_injection_weights(0.1)
-    net.num_duplication = int(args.percent_duplication * width)
-    print(width)
+    # net.error_injection_weights(0.1)
+    net.error_injection_weights_all(0.05)
+    # net.num_duplication = int(args.percent_duplication * width)
+    # print(width)
 
     if not args.duplicated:
         print("Evaluating model without duplication...")
@@ -279,7 +286,8 @@ if __name__ == '__main__':
         # Change to evaluate the model with attention
         # device = torch.device("cuda")
 
-        num_layer_mp = {1: width, 2: 128, 3: 256}
+        # num_layer_mp = {1: width, 2: 128, 3: 256}
+        num_layer_mp = {1: 64, 2: 128, 3: 256}
         # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
         # layer_mp = {1: net.fc1.weight}
         layer_mp = {1: net.conv1_attention.weight}
@@ -303,33 +311,38 @@ if __name__ == '__main__':
                     net.duplicate_index3 = final.indices[0]
         elif args.ft_type == "importance":
             print("importance:")
-            for k in {1}:
-                index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+            # for k in {1}:
+            for k in net.all_layer_indices:
+                # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
                 net_imp = create_mobilenetv1_ssd(len(class_names))
                 weights_imp = copy.deepcopy(net.state_dict())
-                net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
+                # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
                 net_imp.load_state_dict(weights_imp)
                 net_imp.is_importance = True
-                net_imp.weight_index = args.weight_index
+                # net_imp.weight_index = args.weight_index
                 importance = cal_importance(net_imp)
                 net_imp.is_importance = False
-                print(len(importance[0]))
-                tmp = importance[0].sum(2).sum(1)
+                # print(len(importance[0]))
+                tmp = importance[k - 1].sum(2).sum(1)
                 # tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
-                if k == 1:
-                    net.duplicate_index1 = final.indices[0]
-                    print(net.duplicate_index1)
-                elif k == 2:
-                    net.duplicate_index2 = final.indices[0]
-                if k == 3:
-                    net.duplicate_index3 = final.indices[0]
+                net.all_duplication_indices[k] = final.indices[0]
+                # if k == 1:
+                #     net.duplicate_index1 = final.indices[0]
+                #     print(net.duplicate_index1)
+                # elif k == 2:
+                #     net.duplicate_index2 = final.indices[0]
+                # if k == 3:
+                #     net.duplicate_index3 = final.indices[0]
         elif args.ft_type == "d2nn":
             print("d2nn:")
-            for k in {1}:
-                index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+            # for k in {1}:
+            for k in net.all_layer_indices:
+                # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
                 weight_sum, _ = weight_sum_eval(net)
                 # exit()
                 # tmp = torch.sum(layer_mp[k], axis=0)
@@ -337,32 +350,35 @@ if __name__ == '__main__':
                 #tmp = torch.mul(weight_sum[0], weight_sum[1])
                 #tmp = weight_sum[0] + weight_sum[1]
                 # print(tmp.size())
-                tmp = weight_sum[0]
+                tmp = weight_sum[k - 1]
                 # print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
-                if k == 1:
-                    net.duplicate_index1 = final.indices[0]
-                    print(net.duplicate_index1)
-                elif k == 2:
-                    net.duplicate_index2 = final.indices[0]
-                if k == 3:
-                    net.duplicate_index3 = final.indices[0]
+                net.all_duplication_indices[k] = final.indices[0]
+                # if k == 1:
+                #     net.duplicate_index1 = final.indices[0]
+                #     print(net.duplicate_index1)
+                # elif k == 2:
+                #     net.duplicate_index2 = final.indices[0]
+                # if k == 3:
+                #     net.duplicate_index3 = final.indices[0]
         else:
             print("random:")
-            for k in {1}:
-                index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
-                tmp = torch.randn(num_layer_mp[k]).to(DEVICE)
+            # for k in {1}:
+            for k in net.all_layer_indices:
+                # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+                tmp = torch.randn(net.all_width[k - 1]).to(DEVICE)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
-                if k == 1:
-                    net.duplicate_index1 = final.indices[0]
-                    print(net.duplicate_index1)
-                elif k == 2:
-                    net.duplicate_index2 = final.indices[0]
-                if k == 3:
-                    net.duplicate_index3 = final.indices[0]
-
+                net.all_duplication_indices[k] = final.indices[0]
+                # if k == 1:
+                #     net.duplicate_index1 = final.indices[0]
+                #     print(net.duplicate_index1)
+                # elif k == 2:
+                #     net.duplicate_index2 = final.indices[0]
+                # if k == 3:
+                #     net.duplicate_index3 = final.indices[0]
 
         net.attention_mode = True
     # net.eval()
@@ -397,6 +413,7 @@ if __name__ == '__main__':
         image = dataset.get_image(i)
         # print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
         timer.start("Predict")
+        # use timer
         boxes, labels, probs = predictor.predict(image)
         # print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
         indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
