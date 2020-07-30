@@ -78,15 +78,18 @@ class SSD(nn.Module):
         # change_dim = x[:, :self.num_duplication, :, :].flatten().shape[0]
         change_dim = x[:, :int(n * self.percentage), :, :].flatten().shape[0]
         if is_origin:
+            # random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+            # x[random_index1] = 0
+            # return
             duplicate_index = torch.arange(n).type(torch.long).to(device)
         index = torch.arange(n).type(torch.long).to(device)
         final = torch.stack((duplicate_index, index), axis=0)
         final = final.sort(dim=1)
         reverse_index = final.indices[0]
 
-        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
-        random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+        random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
         x[random_index1] = 0
         if x_dup is not None:
             x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
