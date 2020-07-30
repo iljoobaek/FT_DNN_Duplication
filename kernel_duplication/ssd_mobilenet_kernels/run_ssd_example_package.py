@@ -56,7 +56,7 @@ else:
 time_start = time.time()
 frame_ctr = 0
 for i_path in sorted(os.listdir(image_path)):
-    print(image_path+i_path)
+    # print(image_path+i_path)
     orig_image = cv2.imread(image_path+i_path)
 
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
@@ -79,7 +79,7 @@ for i_path in sorted(os.listdir(image_path)):
     path = out_path + i_path
     cv2.imwrite(path, orig_image)
     #cv2.imshow("file", orig_image)
-    print(f"Found {len(probs)} objects. The output image is {path}")
+    # print(f"Found {len(probs)} objects. The output image is {path}")
     frame_ctr = frame_ctr + 1
     if frame_ctr == 10:
         time_now = time.time()
