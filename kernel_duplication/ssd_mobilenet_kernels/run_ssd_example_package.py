@@ -92,10 +92,13 @@ for i_path in sorted(os.listdir(image_path)):
     cv2.imwrite(path, orig_image)
     #cv2.imshow("file", orig_image)
     # print(f"Found {len(probs)} objects. The output image is {path}")
-    frame_ctr = frame_ctr + 1
-    if frame_ctr == 10:
-        time_now = time.time()
-        fps = frame_ctr / (time_now - time_start)
-        print("fps: %f" % fps)
-        frame_ctr = 0
-        time_start = time_now
+    time_now = time.time()
+    print(time_now - time_start)
+    time_start = time_now
+    # frame_ctr = frame_ctr + 1
+    # if frame_ctr == 10:
+    #     time_now = time.time()
+    #     fps = frame_ctr / (time_now - time_start)
+    #     print("fps: %f" % fps)
+    #     frame_ctr = 0
+    #     time_start = time_now

@@ -4,6 +4,7 @@ import numpy as np
 from typing import List, Tuple
 import torch.nn.functional as F
 import copy
+import time
 
 from ..utils import box_utils
 from collections import namedtuple
@@ -74,39 +75,44 @@ class SSD(nn.Module):
         # print(x.shape)
         device = torch.device("cuda")
         origin_shape = x.shape
+        # total_dim = x.flatten().shape[0]
         total_dim = x[:, :n, :, :].flatten().shape[0]
         # change_dim = x[:, :self.num_duplication, :, :].flatten().shape[0]
-        # change_dim = x[:, :int(n * self.percentage), :, :].flatten().shape[0]
-        # if is_origin:
-        #     # random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        #     # x[random_index1] = 0
-        #     # return
-        #     duplicate_index = torch.arange(n).type(torch.long).to(device)
-        # index = torch.arange(n).type(torch.long).to(device)
-        # final = torch.stack((duplicate_index, index), axis=0)
-        # final = final.sort(dim=1)
-        # reverse_index = final.indices[0]
+
+        change_dim = x[:, :int(n * self.percentage), :, :].flatten().shape[0]
+        if is_origin:
+            # random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+            # x[random_index1] = 0
+            # return
+            duplicate_index = torch.arange(n).type(torch.long).to(device)
+        index = torch.arange(n).type(torch.long).to(device)
+        final = torch.stack((duplicate_index, index), axis=0)
+        final = final.sort(dim=1)
+        reverse_index = final.indices[0]
 
         # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
-        zeromat = torch.zeros(x.size()).to(device)
+        # x = x.flatten()
+        # zeromat = torch.zeros(x.size()).to(device)
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
-        x[random_index1] = zeromat[random_index1]
-        # if x_dup is not None:
-        #     x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
-        #     # random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
-        #     # x_duplicate[random_index2] = 0
-        #     # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
-        #     # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
-        #     x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
-        #     x = (x+x_duplicate)/2
+        # x[random_index1] = zeromat[random_index1]
+        x[random_index1] = 0
+
+        if x_dup is not None:
+            x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
+            # random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
+            # x_duplicate[random_index2] = 0
+            # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
+            # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
+            x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
+            x = (x+x_duplicate)/2
 
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
 
 
         x = x.reshape(origin_shape)
-        # x = x[:, reverse_index, :, :]
+        x = x[:, reverse_index, :, :]
 
         return x
 
@@ -181,6 +187,7 @@ class SSD(nn.Module):
         locations = []
         start_layer_index = 0
         header_index = 0
+        total_time = 0
         for end_layer_index in self.source_layer_indexes:
             if isinstance(end_layer_index, GraphPath):
                 path = end_layer_index
@@ -219,7 +226,9 @@ class SSD(nn.Module):
                                                      x_dup=x_dup)
 
                         else:
+                            start = time.time()
                             x = self.error_injection(x, self.error, None, is_origin=True, n=self.all_width[start_layer_index + i - 1])
+                            total_time += time.time() - start
                     elif self.attention_mode:
                         # print("train attention")
                         # x = x.permute(0, 2, 3, 1)
@@ -261,6 +270,7 @@ class SSD(nn.Module):
 
         confidences = torch.cat(confidences, 1)
         locations = torch.cat(locations, 1)
+        print(total_time)
         
         if self.is_test:
             confidences = F.softmax(confidences, dim=2)
