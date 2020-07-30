@@ -9,6 +9,9 @@ import sys
 import os
 import time
 import os.path          as osp
+import torch
+
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 if len(sys.argv) < 6:
@@ -43,6 +46,7 @@ net.error = 0.01
 net.run_original = False
 net.duplicated = False
 net.percentage = 0.5
+net.to(DEVICE)
 net.error_injection_weights_all(0.01)
 
 if net_type == 'vgg16-ssd':
