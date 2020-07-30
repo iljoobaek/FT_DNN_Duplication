@@ -89,8 +89,9 @@ class SSD(nn.Module):
 
         # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
+        zeromat = torch.zeros(x.size()).to(device)
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
-        x[random_index1] = 0
+        x[random_index1] = zeromat[random_index1]
         if x_dup is not None:
             x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
             # random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
