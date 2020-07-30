@@ -270,7 +270,7 @@ class SSD(nn.Module):
 
         confidences = torch.cat(confidences, 1)
         locations = torch.cat(locations, 1)
-        print(total_time)
+        # print(total_time)
         
         if self.is_test:
             confidences = F.softmax(confidences, dim=2)
