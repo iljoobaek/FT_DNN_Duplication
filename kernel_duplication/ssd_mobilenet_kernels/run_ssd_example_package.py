@@ -67,6 +67,7 @@ for i_path in sorted(os.listdir(image_path)):
         cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), (255, 255, 0), 2)
         # label = f"""{voc_dataset.class_names[labels[i]]}: {probs[i]:.2f}"""
         label = f"{class_names[labels[i]]}: {probs[i]:.2f}"
+        print(class_names[labels[i]], probs[i])
         label = class_names[labels[i]] + str(probs[i])
         cv2.putText(orig_image, label,
                     (box[0] + 2, box[1] + 4),
