@@ -39,6 +39,11 @@ else:
     print("The net type is wrong. It should be one of vgg16-ssd, mb1-ssd and mb1-ssd-lite.")
     sys.exit(1)
 net.load(model_path)
+net.error = 0.01
+net.run_original = False
+net.duplicated = False
+net.percentage = 0.5
+net.error_injection_weights_all(0.01)
 
 if net_type == 'vgg16-ssd':
     predictor = create_vgg_ssd_predictor(net, candidate_size=200)
@@ -52,6 +57,7 @@ elif net_type == 'sq-ssd-lite':
     predictor = create_squeezenet_ssd_lite_predictor(net, candidate_size=200)
 else:
     predictor = create_vgg_ssd_predictor(net, candidate_size=200)
+
 
 time_start = time.time()
 frame_ctr = 0
