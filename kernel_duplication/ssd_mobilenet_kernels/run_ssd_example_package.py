@@ -65,7 +65,8 @@ for i_path in sorted(os.listdir(image_path)):
         box = boxes[i, :]
         cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), (255, 255, 0), 2)
         #label = f"""{voc_dataset.class_names[labels[i]]}: {probs[i]:.2f}"""
-        label = f"{class_names[labels[i]]}: {probs[i]:.2f}"
+        # label = f"{class_names[labels[i]]}: {probs[i]:.2f}"
+        label = class_names[labels[i]] + str(probs[i])
         cv2.putText(orig_image, label,
                     (box[0] + 2, box[1] + 4),
                     cv2.FONT_HERSHEY_SIMPLEX,
@@ -77,7 +78,7 @@ for i_path in sorted(os.listdir(image_path)):
     path = out_path + i_path
     cv2.imwrite(path, orig_image)
     #cv2.imshow("file", orig_image)
-    print(f"Found {len(probs)} objects. The output image is {path}")
+    # print(f"Found {len(probs)} objects. The output image is {path}")
     frame_ctr = frame_ctr + 1
     if frame_ctr == 10:
         time_now = time.time()
