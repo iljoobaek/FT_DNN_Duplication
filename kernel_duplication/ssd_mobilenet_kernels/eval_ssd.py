@@ -41,6 +41,7 @@ parser.add_argument('--mb2_width_mult', default=1.0, type=float,
 parser.add_argument('--run_original', default=False, type=str2bool, help='train the original model')
 parser.add_argument('--duplicated', default=False, type=str2bool, help='make duplication')
 parser.add_argument('--error_rate', type=float, default=0, metavar='M', help='error_rate')
+parser.add_argument('--weight_error', type=float, default=0, metavar='M', help='error_rate')
 parser.add_argument('--percent_duplication', type=float, default=0, metavar='M', help='error_rate')
 # parser.add_argument('--touch_layer_index', default=1, type=int,
 #                     help='how many layers to add attention, maximum 3')
@@ -382,7 +383,7 @@ if __name__ == '__main__':
                 #     net.duplicate_index3 = final.indices[0]
 
         # net.attention_mode = True
-    net.error_injection_weights_all(0.01)
+    net.error_injection_weights_all(args.weight_error)
     # net.eval()
     # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
     #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
