@@ -267,7 +267,7 @@ if __name__ == '__main__':
 
     net = net.to(DEVICE)
 
-    # net.weight_index = args.weight_index
+    net.weight_index = args.weight_index
     # net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     # net.weights_copy[net.weight_index].eval()
     for i in net.all_layer_indices:

@@ -203,8 +203,8 @@ class SSD(nn.Module):
             # for layer in self.base_net[start_layer_index: end_layer_index]:
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
-                # if not self.run_original and start_layer_index + i == self.weight_index:
-                if not self.run_original and 0 < start_layer_index + i < 13:
+                if not self.run_original and start_layer_index + i == self.weight_index:
+                # if not self.run_original and 0 < start_layer_index + i < 13:
 
                     # x_copy = copy.deepcopy(x)
                     x_copy = x.detach().clone()
@@ -213,8 +213,8 @@ class SSD(nn.Module):
                 x = layer(x) # original kernel
                 # x_tmp = x.detach().clone()
                 # print(start_layer_index + i, x.size())
-                # if not self.run_original and start_layer_index + i == self.weight_index:
-                if not self.run_original and 0 < start_layer_index + i < 13:
+                if not self.run_original and start_layer_index + i == self.weight_index:
+                # if not self.run_original and 0 < start_layer_index + i < 13:
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
