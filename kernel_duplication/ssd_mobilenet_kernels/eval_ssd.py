@@ -383,7 +383,8 @@ if __name__ == '__main__':
                 #     net.duplicate_index3 = final.indices[0]
 
         # net.attention_mode = True
-    net.error_injection_weights_all(args.weight_error)
+    # net.error_injection_weights_all(args.weight_error)
+    net.error_injection_weights(args.weight_error)
     # net.eval()
     # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
     #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):
