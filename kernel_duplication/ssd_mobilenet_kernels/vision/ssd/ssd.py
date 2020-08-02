@@ -90,14 +90,14 @@ class SSD(nn.Module):
         final = final.sort(dim=1)
         reverse_index = final.indices[0]
 
-        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
         # x = x.flatten()
         # zeromat = torch.zeros(x.size()).to(device)
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
         # x[random_index1] = zeromat[random_index1]
-        # x[random_index1] = 0
-        x[random_index1] = m.sample(x[random_index1].size()).squeeze()
+        x[random_index1] = 0
+        # x[random_index1] = m.sample(x[random_index1].size()).squeeze()
 
         if x_dup is not None:
             x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
