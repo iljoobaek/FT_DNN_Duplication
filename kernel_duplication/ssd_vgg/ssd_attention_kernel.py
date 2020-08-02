@@ -211,13 +211,13 @@ class SSD(nn.Module):
             x1[random_index1] = 1
             x = x.reshape(size)
             x1 = x1.reshape(size1)
-            # m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
+            m = torch.distributions.normal.Normal(torch.tensor([0.0]), torch.tensor([0.5]))
             # print(m.sample(size).size())
             with torch.no_grad():
-                # self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, m.sample(size).squeeze())
-                # self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, m.sample(size1).squeeze())
-                self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, torch.zeros(size).cuda())
-                self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, torch.zeros(size1).cuda())
+                self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, m.sample(size).squeeze())
+                self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, m.sample(size1).squeeze())
+                # self.vgg[k].weight.data = torch.where(x == 0, self.vgg[k].weight.data, torch.zeros(size).cuda())
+                # self.vgg[k].bias.data = torch.where(x1 == 0, self.vgg[k].bias.data, torch.zeros(size1).cuda())
 
             # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
