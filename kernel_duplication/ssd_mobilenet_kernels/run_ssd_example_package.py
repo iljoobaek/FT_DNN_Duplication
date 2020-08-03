@@ -26,7 +26,7 @@ image_path = sys.argv[4]
 # dup = sys.argv[6]
 # err = sys.argv[7]
 
-out_path = "detection_no_error/"
+out_path = "detection/"
 
 if not os.path.exists(out_path):
     os.mkdir(out_path)
