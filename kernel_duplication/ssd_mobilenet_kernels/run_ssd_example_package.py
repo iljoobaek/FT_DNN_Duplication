@@ -52,24 +52,24 @@ else:
     print("The net type is wrong. It should be one of vgg16-ssd, mb1-ssd and mb1-ssd-lite.")
     sys.exit(1)
 net.load(model_path)
-net.error = 0.01
+# net.error = 0.01
 net.run_original = False
-net.duplicated = True
+net.duplicated = False
 net.to(DEVICE)
-for i in net.all_layer_indices:
-    net.weights_copy[i] = copy.deepcopy(net.base_net[i])
-    net.weights_copy[i].eval()
-net.percentage = 0.5
-
-print("d2nn:")
-for k in net.all_layer_indices:
-    index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
-    weight_sum, _ = weight_sum_eval(net)
-    tmp = weight_sum[k - 1]
-    final = torch.stack((tmp, index), axis=0)
-    final = final.sort(dim=1, descending=True)
-    net.all_duplication_indices[k] = final.indices[0]
-net.error_injection_weights_all(0.01)
+# for i in net.all_layer_indices:
+#     net.weights_copy[i] = copy.deepcopy(net.base_net[i])
+#     net.weights_copy[i].eval()
+# net.percentage = 0.5
+#
+# print("d2nn:")
+# for k in net.all_layer_indices:
+#     index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+#     weight_sum, _ = weight_sum_eval(net)
+#     tmp = weight_sum[k - 1]
+#     final = torch.stack((tmp, index), axis=0)
+#     final = final.sort(dim=1, descending=True)
+#     net.all_duplication_indices[k] = final.indices[0]
+# net.error_injection_weights_all(0.01)
 
 if net_type == 'vgg16-ssd':
     predictor = create_vgg_ssd_predictor(net, candidate_size=200)
@@ -115,9 +115,9 @@ for i_path in sorted(os.listdir(image_path)):
     print(f"fps: {fps:.2f}")
     time_start = time_now
     cv2.putText(orig_image, f"fps: {fps:.2f}",
-                (2, 2),
+                (2, 20),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                2,  # font scale
+                1.5,  # font scale
                 (255, 255, 0),
                 1)  # line type
     #path = out_path + str(image_path.split("/")[-1].split(".")[0])+".jpeg"
