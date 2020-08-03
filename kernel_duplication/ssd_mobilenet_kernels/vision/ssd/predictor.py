@@ -70,7 +70,7 @@ class Predictor:
             picked_labels.extend([class_index] * box_probs.size(0))
 
         if not picked_box_probs:
-            return torch.tensor([]), torch.tensor([]), torch.tensor([])
+            return torch.tensor([]), torch.tensor([]), torch.tensor([]), err_t
         picked_box_probs = torch.cat(picked_box_probs)
         picked_box_probs[:, 0] *= width
         picked_box_probs[:, 1] *= height
