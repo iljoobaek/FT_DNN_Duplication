@@ -90,7 +90,7 @@ else:
     predictor = create_vgg_ssd_predictor(net, candidate_size=200)
 
 
-time_start = time.time()
+# time_start = time.time()
 frame_ctr = 0
 for i_path in sorted(os.listdir(image_path)):
     # print(image_path+i_path)
@@ -98,7 +98,19 @@ for i_path in sorted(os.listdir(image_path)):
 
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
     err_t = 0
+    time_start = time.time()
     boxes, labels, probs, err_t = predictor.predict(image, 10, 0.4)
+    time_now = time.time()
+    # print(time_now - time_start)
+    fps = 1 / (time_now - time_start - err_t)
+    print(f"fps: {fps:.2f}, {err_t:2f}")
+    # time_start = time_now
+    cv2.putText(orig_image, f"fps: {fps:.2f}",
+                (5, 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.2,  # font scale
+                (255, 255, 255),
+                2)  # line type
 
     for i in range(boxes.size(0)):
         box = boxes[i, :]
@@ -114,17 +126,7 @@ for i_path in sorted(os.listdir(image_path)):
                     0.7,  # font scale
                     (255, 0, 255),
                     1)  # line type
-    time_now = time.time()
-    # print(time_now - time_start)
-    fps = 1 / (time_now - time_start - err_t)
-    print(f"fps: {fps:.2f}, {err_t:2f}")
-    time_start = time_now
-    cv2.putText(orig_image, f"fps: {fps:.2f}",
-                (5, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1.5,  # font scale
-                (0, 0, 0),
-                1)  # line type
+
     #path = out_path + str(image_path.split("/")[-1].split(".")[0])+".jpeg"
     path = out_path + i_path
     cv2.imwrite(path, orig_image)
