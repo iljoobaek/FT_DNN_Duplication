@@ -54,7 +54,7 @@ with open(path, 'r') as f:
 n_plots = 3
 plt.figure(figsize=(4.8 * n_plots, 4.2))
 # x = np.arange(1, width + 1)
-x = np.arange(0.1, 1.1, 0.1)
+x = np.arange(1, 11, 1)
 idx = {0: 0, 1: 4, 2: 9}
 ori = np.array(y_ori_all)
 imp = np.array(y_imp_all)
@@ -65,7 +65,7 @@ rad = np.array(y_rad_all)
 for i in range(n_plots):
     plt.subplot(1, n_plots, i + 1)
     data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x))),
-            'y': np.concatenate((ori[:,idx[i]], imp[:,idx[i]], sco[:,idx[i]], rad[:,idx[i]])),
+            'y': np.concatenate((ori[idx[i]], imp[idx[i]], sco[idx[i]], rad[idx[i]])),
             'Duplication Type': ["none"] * len(x) + ["2nd derivative"] * len(x) + ["weight sum"] * len(x) + ["random"] * len(x)}
 
     df = pd.DataFrame(data)
@@ -77,8 +77,8 @@ for i in range(n_plots):
     ax.spines['right'].set_color('black')
 
     plt.xlabel('Error Rate (%)', fontsize=18, fontweight='bold')
-    plt.ylabel('Accuracy (%)', fontsize=18, fontweight='bold')
-    plt.title('Varied Weight Error\n Feature Map Error=' + str((idx[i] + 1)/10.0), fontsize=18, fontweight='bold')
+    plt.ylabel('Accuracy', fontsize=18, fontweight='bold')
+    plt.title('Varied Feature Map Error\n Weight Error=' + str((idx[i] + 1)) + '%', fontsize=18, fontweight='bold')
     plt.tick_params(labelsize=18)
     plt.ylim(0, 0.7)
 

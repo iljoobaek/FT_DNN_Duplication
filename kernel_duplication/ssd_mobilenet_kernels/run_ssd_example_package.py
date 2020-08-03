@@ -26,7 +26,7 @@ image_path = sys.argv[4]
 # dup = sys.argv[6]
 # err = sys.argv[7]
 
-out_path = "detection/"
+out_path = "detection_error_dup/"
 
 if not os.path.exists(out_path):
     os.mkdir(out_path)
@@ -58,22 +58,22 @@ else:
 net.load(model_path)
 net.error = 0.01
 net.run_original = False
-net.duplicated = False
-# net.duplicated = True
+# net.duplicated = False
+net.duplicated = True
 net.to(DEVICE)
-# for i in net.all_layer_indices:
-#     net.weights_copy[i] = copy.deepcopy(net.base_net[i])
-#     net.weights_copy[i].eval()
-# net.percentage = 0.5
-#
-# print("d2nn:")
-# for k in net.all_layer_indices:
-#     index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
-#     weight_sum, _ = weight_sum_eval(net)
-#     tmp = weight_sum[k - 1]
-#     final = torch.stack((tmp, index), axis=0)
-#     final = final.sort(dim=1, descending=True)
-#     net.all_duplication_indices[k] = final.indices[0]
+for i in net.all_layer_indices:
+    net.weights_copy[i] = copy.deepcopy(net.base_net[i])
+    net.weights_copy[i].eval()
+net.percentage = 0.5
+
+print("d2nn:")
+for k in net.all_layer_indices:
+    index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+    weight_sum, _ = weight_sum_eval(net)
+    tmp = weight_sum[k - 1]
+    final = torch.stack((tmp, index), axis=0)
+    final = final.sort(dim=1, descending=True)
+    net.all_duplication_indices[k] = final.indices[0]
 net.error_injection_weights_all(0.01)
 
 if net_type == 'vgg16-ssd':
