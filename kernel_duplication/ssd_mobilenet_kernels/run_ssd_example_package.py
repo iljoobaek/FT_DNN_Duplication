@@ -26,7 +26,7 @@ image_path = sys.argv[4]
 # dup = sys.argv[6]
 # err = sys.argv[7]
 
-out_path = "detection_no_error/"
+out_path = "detection/"
 
 if not os.path.exists(out_path):
     os.mkdir(out_path)
@@ -56,7 +56,7 @@ else:
     print("The net type is wrong. It should be one of vgg16-ssd, mb1-ssd and mb1-ssd-lite.")
     sys.exit(1)
 net.load(model_path)
-# net.error = 0.01
+net.error = 0.01
 net.run_original = False
 net.duplicated = False
 # net.duplicated = True
@@ -74,7 +74,7 @@ net.duplicated = False
 #     final = torch.stack((tmp, index), axis=0)
 #     final = final.sort(dim=1, descending=True)
 #     net.all_duplication_indices[k] = final.indices[0]
-# net.error_injection_weights_all(0.01)
+net.error_injection_weights_all(0.01)
 
 if net_type == 'vgg16-ssd':
     predictor = create_vgg_ssd_predictor(net, candidate_size=200)
