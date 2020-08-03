@@ -90,9 +90,9 @@ for i_path in sorted(os.listdir(image_path)):
     time_now = time.time()
     # print(time_now - time_start)
     fps = 1 / (time_now - time_start - err_t)
-    print(f"fps: {fps}.2f")
+    print(f"fps: {fps:.2f}")
     time_start = time_now
-    cv2.putText(orig_image, f"fps: {fps}.2f",
+    cv2.putText(orig_image, f"fps: {fps:.2f}",
                 (2, 2),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 2,  # font scale
