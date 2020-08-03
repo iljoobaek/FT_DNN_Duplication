@@ -86,15 +86,22 @@ for i_path in sorted(os.listdir(image_path)):
                     0.7,  # font scale
                     (255, 0, 255),
                     1)  # line type
-
+    time_now = time.time()
+    # print(time_now - time_start)
+    fps = 1 / (time_now - time_start)
+    time_start = time_now
+    cv2.putText(orig_image, f"fps: {fps}.2f",
+                (2, 2),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,  # font scale
+                (255, 255, 0),
+                1)  # line type
     #path = out_path + str(image_path.split("/")[-1].split(".")[0])+".jpeg"
     path = out_path + i_path
     cv2.imwrite(path, orig_image)
     #cv2.imshow("file", orig_image)
     # print(f"Found {len(probs)} objects. The output image is {path}")
-    time_now = time.time()
-    print(time_now - time_start)
-    time_start = time_now
+
     # frame_ctr = frame_ctr + 1
     # if frame_ctr == 10:
     #     time_now = time.time()
