@@ -147,7 +147,7 @@ class SSD(nn.Module):
                 # if isinstance(module, nn.BatchNorm2d):
                 #     length = max(module.weight.data.size()[0], length)
                 if isinstance(module, nn.Conv2d):
-                    print(module.weight.data.size())
+                    # print(module.weight.data.size())
                     size = module.weight.data.size()
                     # if size[1] == 1:
                     #     length = size[0]
@@ -167,8 +167,8 @@ class SSD(nn.Module):
                     m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
             # print(m.sample(size).size())
                     with torch.no_grad():
-                        print(m.sample(size).size(), m.sample(size).squeeze(dim=-1).size())
-                        module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
+                        # print(m.sample(size).size(), m.sample(size).squeeze(dim=-1).size())
+                        module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze(dim=-1))
                         # module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
