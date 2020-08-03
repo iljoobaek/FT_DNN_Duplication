@@ -34,7 +34,7 @@ class Predictor:
         images = images.to(self.device)
         with torch.no_grad():
             self.timer.start()
-            scores, boxes = self.net.forward(images)
+            scores, boxes, err_t = self.net.forward(images)
             # print("Inference time: ", self.timer.end())
         boxes = boxes[0]
         scores = scores[0]
@@ -75,4 +75,4 @@ class Predictor:
         picked_box_probs[:, 1] *= height
         picked_box_probs[:, 2] *= width
         picked_box_probs[:, 3] *= height
-        return picked_box_probs[:, :4], torch.tensor(picked_labels), picked_box_probs[:, 4]
+        return picked_box_probs[:, :4], torch.tensor(picked_labels), picked_box_probs[:, 4], err_t

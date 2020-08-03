@@ -90,14 +90,14 @@ class SSD(nn.Module):
         final = final.sort(dim=1)
         reverse_index = final.indices[0]
 
-        m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
         x = x[:, duplicate_index, :, :].flatten()
         # x = x.flatten()
         # zeromat = torch.zeros(x.size()).to(device)
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
         # x[random_index1] = zeromat[random_index1]
-        # x[random_index1] = 0
-        x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
+        x[random_index1] = 0
+        # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
 
         if x_dup is not None:
             x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
@@ -164,12 +164,12 @@ class SSD(nn.Module):
                     # x1[random_index1] = 1
                     x = x.reshape(size).to(self.device)
                     # x1 = x1.reshape(size1)
-                    m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
+                    # m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
             # print(m.sample(size).size())
                     with torch.no_grad():
                         # print(m.sample(size).size(), m.sample(size).squeeze(dim=-1).size())
-                        module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze(dim=-1))
-                        # module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
+                        # module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze(dim=-1))
+                        module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
                         # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
             # print(self.vgg[2].weight.data[0][0])
@@ -184,7 +184,8 @@ class SSD(nn.Module):
         self.width = length
         return length
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    # def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, float]:
         confidences = []
         locations = []
         start_layer_index = 0
@@ -205,8 +206,8 @@ class SSD(nn.Module):
             # for layer in self.base_net[start_layer_index: end_layer_index]:
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
-                if not self.run_original and start_layer_index + i == self.weight_index:
-                # if not self.run_original and 0 < start_layer_index + i < 13:
+                # if not self.run_original and start_layer_index + i == self.weight_index:
+                if not self.run_original and 0 < start_layer_index + i < 13:
 
                     # x_copy = copy.deepcopy(x)
                     x_copy = x.detach().clone()
@@ -215,8 +216,8 @@ class SSD(nn.Module):
                 x = layer(x) # original kernel
                 # x_tmp = x.detach().clone()
                 # print(start_layer_index + i, x.size())
-                if not self.run_original and start_layer_index + i == self.weight_index:
-                # if not self.run_original and 0 < start_layer_index + i < 13:
+                # if not self.run_original and start_layer_index + i == self.weight_index:
+                if not self.run_original and 0 < start_layer_index + i < 13:
                     if self.error:
                         # print(self.error)
                         if self.duplicated:
@@ -280,9 +281,9 @@ class SSD(nn.Module):
                 locations.to(self.device), self.priors, self.config.center_variance, self.config.size_variance
             )
             boxes = box_utils.center_form_to_corner_form(boxes)
-            return confidences, boxes
+            return confidences, boxes, total_time
         else:
-            return confidences, locations
+            return confidences, locations, total_time
 
     def compute_header(self, i, x):
         confidence = self.classification_headers[i](x)
