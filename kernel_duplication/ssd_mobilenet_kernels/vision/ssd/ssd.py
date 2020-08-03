@@ -99,14 +99,14 @@ class SSD(nn.Module):
         x[random_index1] = 0
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
 
-        if x_dup is not None:
-            x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
+        # if x_dup is not None:
+        #     x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
             # random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
             # x_duplicate[random_index2] = 0
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
             # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
-            x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
-            x = (x+x_duplicate)/2
+            # x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
+            # x = (x+x_duplicate)/2
 
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
         # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
@@ -220,13 +220,17 @@ class SSD(nn.Module):
                 if not self.run_original and 0 < start_layer_index + i < 13:
                     if self.error:
                         # print(self.error)
+
                         if self.duplicated:
                             # x_dup = self.weights_copy[self.weight_index](x_copy) # duplicated kernel
                             x_dup = self.weights_copy[start_layer_index + i](x_copy)
                             # x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=self.width, x_dup=x_dup)
+                            start = time.time()
                             x = self.error_injection(x, self.error, self.all_duplication_indices[start_layer_index + i],
                                                      is_origin=False, n=self.all_width[start_layer_index + i - 1],
                                                      x_dup=x_dup)
+                            total_time += time.time() - start
+                            x = (x + x_dup) / 2
 
                         else:
                             start = time.time()
