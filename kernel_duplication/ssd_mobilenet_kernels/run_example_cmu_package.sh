@@ -2,7 +2,7 @@
 
 MODEL=models/attention3/1_ssd300_COCO_9.pth
 
-CUDA_VISIBLE_DEVICES=0
+CUDA_VISIBLE_DEVICES=1
 python run_ssd_example_package.py mb1-ssd \
                                   ${MODEL} \
                                   models/voc-model-labels.txt \
