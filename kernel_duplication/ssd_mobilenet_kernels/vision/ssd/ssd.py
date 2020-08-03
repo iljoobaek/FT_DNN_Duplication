@@ -167,6 +167,7 @@ class SSD(nn.Module):
                     m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
             # print(m.sample(size).size())
                     with torch.no_grad():
+                        print(m.sample(size).size())
                         module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
                         # module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
                         # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
