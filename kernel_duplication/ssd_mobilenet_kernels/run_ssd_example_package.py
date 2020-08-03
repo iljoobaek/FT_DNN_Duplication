@@ -55,11 +55,12 @@ net.load(model_path)
 net.error = 0.01
 net.run_original = False
 net.duplicated = True
+net.to(DEVICE)
 for i in net.all_layer_indices:
     net.weights_copy[i] = copy.deepcopy(net.base_net[i])
     net.weights_copy[i].eval()
 net.percentage = 0.5
-net.to(DEVICE)
+
 print("d2nn:")
 for k in net.all_layer_indices:
     index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
