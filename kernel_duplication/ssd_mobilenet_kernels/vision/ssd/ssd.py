@@ -73,8 +73,8 @@ class SSD(nn.Module):
             :return: tensor, modified tensor with error injected
         """
         # print(x.shape)
-        # device = torch.device("cuda")
-        device = torch.device("cpu")
+        device = torch.device("cuda")
+        # device = torch.device("cpu")
         origin_shape = x.shape
         # total_dim = x.flatten().shape[0]
         total_dim = x[:, :n, :, :].flatten().shape[0]
@@ -119,7 +119,8 @@ class SSD(nn.Module):
         return x
 
     def _kernel_error_injection(self, error_rate, unit):
-        device = torch.device("cpu")
+        # device = torch.device("cpu")
+        device = self.device
         for module in unit:
             if isinstance(module, nn.Conv2d):
                 size = module.weight.data.size()

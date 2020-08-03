@@ -12,7 +12,7 @@ import os.path          as osp
 import torch
 import copy
 
-# DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 if len(sys.argv) < 5:
@@ -60,7 +60,7 @@ net.error = 0.01
 net.run_original = False
 net.duplicated = False
 # net.duplicated = True
-# net.to(DEVICE)
+net.to(DEVICE)
 # for i in net.all_layer_indices:
 #     net.weights_copy[i] = copy.deepcopy(net.base_net[i])
 #     net.weights_copy[i].eval()
@@ -100,17 +100,6 @@ for i_path in sorted(os.listdir(image_path)):
     err_t = 0
     time_start = time.time()
     boxes, labels, probs, err_t = predictor.predict(image, 10, 0.4)
-    time_now = time.time()
-    # print(time_now - time_start)
-    fps = 1 / (time_now - time_start - err_t)
-    print(f"fps: {fps:.2f}, {err_t:2f}")
-    # time_start = time_now
-    cv2.putText(orig_image, f"fps: {fps:.2f}",
-                (5, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1.2,  # font scale
-                (255, 255, 255),
-                2)  # line type
 
     for i in range(boxes.size(0)):
         box = boxes[i, :]
@@ -127,6 +116,17 @@ for i_path in sorted(os.listdir(image_path)):
                     (255, 0, 255),
                     1)  # line type
 
+    time_now = time.time()
+    # print(time_now - time_start)
+    fps = 1 / (time_now - time_start - err_t)
+    print(f"fps: {fps:.2f}, {err_t:2f}")
+    # time_start = time_now
+    cv2.putText(orig_image, f"fps: {fps:.2f}",
+                (5, 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.2,  # font scale
+                (255, 255, 255),
+                2)  # line type
     #path = out_path + str(image_path.split("/")[-1].split(".")[0])+".jpeg"
     path = out_path + i_path
     cv2.imwrite(path, orig_image)
