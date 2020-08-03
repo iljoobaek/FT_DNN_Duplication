@@ -32,6 +32,7 @@ class Predictor:
         image = self.transform(image)
         images = image.unsqueeze(0)
         images = images.to(self.device)
+        err_t = 0
         with torch.no_grad():
             self.timer.start()
             scores, boxes, err_t = self.net.forward(images)
