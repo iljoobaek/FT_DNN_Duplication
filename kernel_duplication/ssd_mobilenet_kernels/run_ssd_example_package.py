@@ -15,7 +15,7 @@ import copy
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 5:
     print('Usage: python run_ssd_example.py <net type>  <model path> <label path> <image path> <output path>')
     sys.exit(0)
 net_type = sys.argv[1]
