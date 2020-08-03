@@ -115,10 +115,10 @@ for i_path in sorted(os.listdir(image_path)):
     print(f"fps: {fps:.2f}")
     time_start = time_now
     cv2.putText(orig_image, f"fps: {fps:.2f}",
-                (2, 20),
+                (5, 40),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.5,  # font scale
-                (255, 255, 0),
+                (0, 0, 0),
                 1)  # line type
     #path = out_path + str(image_path.split("/")[-1].split(".")[0])+".jpeg"
     path = out_path + i_path
