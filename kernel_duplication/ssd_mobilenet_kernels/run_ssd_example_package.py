@@ -10,6 +10,7 @@ import os
 import time
 import os.path          as osp
 import torch
+import copy
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -28,6 +29,15 @@ if not os.path.exists(out_path):
 
 class_names = [name.strip() for name in open(label_path).readlines()]
 
+def weight_sum_eval(model):
+    weights = model.state_dict()
+    evaluation = []
+    names = []
+    # need to find the connection between conv and fc
+    for i in model.all_layer_indices:
+        evaluation.append(weights['base_net.' + str(i + 1) + '.3' + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+    return evaluation, names
+
 if net_type == 'vgg16-ssd':
     net = create_vgg_ssd(len(class_names), is_test=True)
 elif net_type == 'mb1-ssd':
@@ -42,12 +52,23 @@ else:
     print("The net type is wrong. It should be one of vgg16-ssd, mb1-ssd and mb1-ssd-lite.")
     sys.exit(1)
 net.load(model_path)
-# net.error = 0.01
+net.error = 0.01
 net.run_original = False
-net.duplicated = False
+net.duplicated = True
+for i in net.all_layer_indices:
+    net.weights_copy[i] = copy.deepcopy(net.base_net[i])
+    net.weights_copy[i].eval()
 net.percentage = 0.5
 net.to(DEVICE)
-# net.error_injection_weights_all(0.01)
+print("d2nn:")
+for k in net.all_layer_indices:
+    index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+    weight_sum, _ = weight_sum_eval(net)
+    tmp = weight_sum[k - 1]
+    final = torch.stack((tmp, index), axis=0)
+    final = final.sort(dim=1, descending=True)
+    net.all_duplication_indices[k] = final.indices[0]
+net.error_injection_weights_all(0.01)
 
 if net_type == 'vgg16-ssd':
     predictor = create_vgg_ssd_predictor(net, candidate_size=200)
