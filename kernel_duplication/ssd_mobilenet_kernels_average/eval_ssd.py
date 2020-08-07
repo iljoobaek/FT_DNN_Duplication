@@ -319,6 +319,9 @@ if __name__ == '__main__':
                 index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
                 net_imp = create_mobilenetv1_ssd(len(class_names))
                 weights_imp = copy.deepcopy(net.state_dict())
+                for i in weights_imp.all_layer_indices:
+                    weights_imp.weights_copy[i] = copy.deepcopy(weights_imp.base_net[i])
+                    weights_imp.weights_copy[i].eval()
                 # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
                 net_imp.load_state_dict(weights_imp)
                 net_imp.is_importance = True
