@@ -152,7 +152,7 @@ class SSD(nn.Module):
                     module.weight.data = (self.weights_copy[k][i].weight.data + module.weight.data) / 2
 
     def error_injection_weights_all(self, error_rate):
-        print("Inject error to all layers")
+        # print("Inject error to all layers")
         for k in self.all_layer_indices:
             self._kernel_error_injection(error_rate, self.base_net[k])
 
