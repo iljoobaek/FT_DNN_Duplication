@@ -1,3 +1,4 @@
+export CUDA_VISIBLE_DEVICES=1
 NUM_DUP=0.5
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
