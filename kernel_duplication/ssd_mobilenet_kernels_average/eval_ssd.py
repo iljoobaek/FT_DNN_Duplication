@@ -146,6 +146,9 @@ def cal_importance(model):
     :return:
     """
     model.to(DEVICE)
+    for i in model.all_layer_indices:
+        model.weights_copy[i] = copy.deepcopy(model.base_net[i])
+        model.weights_copy[i].eval()
     importance_list = []
     config = mobilenetv1_ssd_config
     train_transform = TrainAugmentation(config.image_size, config.image_mean, config.image_std)
@@ -321,9 +324,7 @@ if __name__ == '__main__':
                 weights_imp = copy.deepcopy(net.state_dict())
                 # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
                 net_imp.load_state_dict(weights_imp)
-                for i in net_imp.all_layer_indices:
-                    net_imp.weights_copy[i] = copy.deepcopy(net_imp.base_net[i])
-                    net_imp.weights_copy[i].eval()
+
                 net_imp.is_importance = True
                 # net_imp.weight_index = args.weight_index
                 importance = cal_importance(net_imp)
