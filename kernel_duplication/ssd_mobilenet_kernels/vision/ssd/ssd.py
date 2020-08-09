@@ -213,7 +213,9 @@ class SSD(nn.Module):
                 if not self.run_original and 0 < start_layer_index + i < 13:
 
                     # x_copy = copy.deepcopy(x)
+                    start = time.time()
                     x_copy = x.detach().clone()
+                    total_time += time.time() - start
                     # pass
 
                 x = layer(x) # original kernel
