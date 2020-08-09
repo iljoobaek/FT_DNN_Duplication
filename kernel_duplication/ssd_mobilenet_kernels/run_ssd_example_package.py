@@ -60,7 +60,7 @@ net.load(model_path)
 net.run_original = False
 net.duplicated = False
 # net.duplicated = True
-net.to(DEVICE)
+# net.to(DEVICE)
 # for i in net.all_layer_indices:
 #     net.weights_copy[i] = copy.deepcopy(net.base_net[i])
 #     net.weights_copy[i].eval()
