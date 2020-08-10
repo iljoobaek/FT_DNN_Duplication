@@ -149,7 +149,9 @@ class SSD(nn.Module):
         for i, module in enumerate(self.base_net[k]):
             if isinstance(module, nn.Conv2d):
                 with torch.no_grad():
+                    print(self.weights_copy[k][i].weight.data.size())
                     module.weight.data = (self.weights_copy[k][i].weight.data + module.weight.data) / 2
+        exit()
 
     def error_injection_weights_all(self, error_rate):
         # print("Inject error to all layers")
@@ -260,6 +262,7 @@ class SSD(nn.Module):
 
                         # else:
                         start = time.time()
+                        # Check this
                         x = self.error_injection(x, self.error, None, is_origin=True, n=self.all_width[start_layer_index + i - 1])
                         total_time += time.time() - start
                     elif self.attention_mode:

@@ -5,7 +5,7 @@ import seaborn as sns; sns.set()
 
 sns.set_style('whitegrid')
 
-path = "results_all_layer.txt"
+path = "results_all_layer_1.txt"
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 1]
 width = 0
@@ -55,7 +55,7 @@ n_plots = 3
 plt.figure(figsize=(4.8 * n_plots, 4.2))
 # x = np.arange(1, width + 1)
 x = np.arange(1, 11, 1)
-idx = {0: 0, 1: 4, 2: 9}
+idx = {0: 0, 1: 1, 2: 2}
 ori = np.array(y_ori_all)
 imp = np.array(y_imp_all)
 sco = np.array(y_sco_all)
