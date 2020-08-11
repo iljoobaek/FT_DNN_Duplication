@@ -153,6 +153,29 @@ class SSD(nn.Module):
                     module.weight.data = (self.weights_copy[k][i].weight.data + module.weight.data) / 2
         exit()
 
+    def weights_error_average(self, k):
+        device = self.device
+        flag = False
+        for i, module in enumerate(self.base_net[k]):
+            if isinstance(module, nn.Conv2d):
+                size = module.weight.data.size()
+                total_dim = torch.zeros(size).flatten().shape[0]
+                random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
+                x = torch.zeros(total_dim)
+                x_zero = torch.zeros(size).to(device)
+                x[random_index] = 1
+                x = x.reshape(size).to(device)
+                with torch.no_grad():
+                    err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
+                    avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
+                    if flag:
+                        err_to_kernel[self.all_duplication_indices[k]] = avg_kernel[self.all_duplication_indices[k]]
+                        module.weight.data = err_to_kernel
+                    else:
+                        module.weight.data = avg_kernel
+                if not flag:
+                    flag = True
+
     def error_injection_weights_all(self, error_rate):
         # print("Inject error to all layers")
         for k in self.all_layer_indices:
@@ -210,8 +233,8 @@ class SSD(nn.Module):
     # def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, float]:
 
-        self.recover()
-        self.error_injection_weights_all(self.weights_error)
+        # self.recover()
+        # self.error_injection_weights_all(self.weights_error)
         confidences = []
         locations = []
         start_layer_index = 0
@@ -235,7 +258,7 @@ class SSD(nn.Module):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
                 if not self.run_original and 0 < start_layer_index + i < 13:
                     if self.error and self.duplicated:
-                        self.weights_average(start_layer_index + i)
+                        self.weights_error_average(start_layer_index + i)
                     # x_copy = copy.deepcopy(x)
                     # x_copy = x.detach().clone()
                     # pass
