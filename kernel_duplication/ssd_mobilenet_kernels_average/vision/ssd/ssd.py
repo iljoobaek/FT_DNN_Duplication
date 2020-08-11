@@ -257,8 +257,11 @@ class SSD(nn.Module):
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
                 if not self.run_original and 0 < start_layer_index + i < 13:
-                    if self.error and self.duplicated:
-                        self.weights_error_average(start_layer_index + i)
+                    if self.error:
+                        if self.duplicated:
+                            self.weights_error_average(start_layer_index + i)
+                        else:
+                            self._kernel_error_injection(self.weights_error, self.base_net[start_layer_index + i])
                     # x_copy = copy.deepcopy(x)
                     # x_copy = x.detach().clone()
                     # pass
