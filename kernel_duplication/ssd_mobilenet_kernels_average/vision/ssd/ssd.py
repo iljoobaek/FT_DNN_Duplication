@@ -134,6 +134,20 @@ class SSD(nn.Module):
                 with torch.no_grad():
                     module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
 
+    def _kernel_recover_and_err(self, k):
+        device = self.device
+        for i, module in enumerate(self.base_net[k]):
+            if isinstance(module, nn.Conv2d):
+                size = module.weight.data.size()
+                total_dim = torch.zeros(size).flatten().shape[0]
+                random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
+                x = torch.zeros(total_dim)
+                x_zero = torch.zeros(size).to(device)
+                x[random_index] = 1
+                x = x.reshape(size).to(device)
+                with torch.no_grad():
+                    module.weight.data = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
+
     def _recover_weight(self, unit, origin):
         for i, module in enumerate(unit):
             if isinstance(module, nn.Conv2d):
@@ -261,7 +275,7 @@ class SSD(nn.Module):
                         if self.duplicated:
                             self.weights_error_average(start_layer_index + i)
                         else:
-                            self._kernel_error_injection(self.weights_error, self.base_net[start_layer_index + i])
+                            self._kernel_recover_and_err(start_layer_index + i)
                     # x_copy = copy.deepcopy(x)
                     # x_copy = x.detach().clone()
                     # pass
