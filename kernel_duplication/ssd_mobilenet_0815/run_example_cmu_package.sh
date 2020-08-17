@@ -6,5 +6,5 @@ CUDA_VISIBLE_DEVICES=0
 python run_ssd_example_package.py mb1-ssd \
                                   ${MODEL} \
                                   models/voc-model-labels.txt \
-                                  /home/droid/data/VOCdevkit/VOC2007/JPEGImages/ \
+                                  /home/rtml/data/VOCdevkit/VOC2007/JPEGImages/ \
 #                                  detection_no_error/
