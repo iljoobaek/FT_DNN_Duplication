@@ -5,7 +5,11 @@ DATAPATH=/home/droid/data/VOCdevkit/VOC2007
 SAVEFILE=result_d2nn_dup.txt
 
 ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
-for WERR in $(seq 0.03 0.01 0.1)
+
+echo "Entropy" >> ${SAVEFILE}
+for NUM_DUP in $(seq 0.2 0.1 0.5)
+do
+for WERR in $(seq 0.01 0.01 0.1)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do
@@ -15,5 +19,6 @@ for ERR in $(seq 0.01 0.01 0.1)
 do
 python eval_ssd.py --error_rate ${ERR} --percent_duplication ${NUM_DUP} --run_original False --duplicated True --ft_type d2nn --dataset_type voc --dataset ${DATAPATH} --net mb1-ssd --trained_model ${ATMODEL} --label_file models/voc-model-labels.txt --weight_index ${IDX} --weight_error ${WERR} --result_save_file ${SAVEFILE}
 
+done
 done
 done
