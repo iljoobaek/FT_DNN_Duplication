@@ -8,9 +8,9 @@ SAVEFILE=result_d2nn_dup.txt
 ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
 
 echo "Entropy" >> ${SAVEFILE}
-for NUM_DUP in $(seq 0.01 0.02 0.09)
-do
-for WERR in $(seq 0.01 0.01 0.05)
+#for NUM_DUP in $(seq 0.01 0.02 0.09)
+#do
+for WERR in $(seq 0.01 0.01 0.03)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do
@@ -22,4 +22,4 @@ python eval_ssd.py --error_rate ${ERR} --percent_duplication ${NUM_DUP} --run_or
 
 done
 done
-done
+#done
