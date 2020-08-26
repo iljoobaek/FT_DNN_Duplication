@@ -1,3 +1,4 @@
+export CUDA_VISIBLE_DEVICES=1
 NUM_DUP=0.1
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
@@ -7,9 +8,9 @@ SAVEFILE=result_d2nn_dup.txt
 ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
 
 echo "Entropy" >> ${SAVEFILE}
-for NUM_DUP in $(seq 0.2 0.1 0.5)
+for NUM_DUP in $(seq 0.01 0.02 0.09)
 do
-for WERR in $(seq 0.01 0.01 0.1)
+for WERR in $(seq 0.01 0.01 0.05)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do

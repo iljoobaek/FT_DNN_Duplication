@@ -1,7 +1,7 @@
 NUM_DUP=0.1
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
-DATAPATH=/home/droid/data/VOCdevkit/VOC2007
+DATAPATH=/home/rtml/data/VOCdevkit/VOC2007
 SAVEFILE=result_rad_dup.txt
 
 ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
