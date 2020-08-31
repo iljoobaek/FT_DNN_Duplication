@@ -67,7 +67,7 @@ class SSD(nn.Module):
         self.percentage = 0.5
         # self.percentage_list = [0.70, 0.70, 0.70, 0.70, 0.70, 0.70, 0.56, 0.2, 0.7, 0.7, 0.27, 0.2]
         self.percentage_list = [0.5] * 12
-        self.percentage_list = [1] * 12
+        #self.percentage_list = [1] * 12
         
         # entropy
         self.layerwise_entropy = []

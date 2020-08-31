@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=1
-NUM_DUP=0.1
+NUM_DUP=0.5
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
 DATAPATH=/home/rtml/data/VOCdevkit/VOC2007
@@ -10,7 +10,7 @@ ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
 echo "Entropy" >> ${SAVEFILE}
 #for NUM_DUP in $(seq 0.01 0.02 0.09)
 #do
-for WERR in $(seq 0.01 0.01 0.01)
+for WERR in $(seq 0.02 0.01 0.02)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do
