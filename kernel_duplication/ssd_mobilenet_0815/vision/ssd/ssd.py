@@ -62,13 +62,14 @@ class SSD(nn.Module):
         self.weights_copy = {}
         self.all_layer_indices = range(1, 13)
         self.width = 0
-        self.all_width = [64, 128, 128, 256, 256, 512, 512, 512, 512, 512, 512, 1024]
+        self.all_width = [64, 128, 128, 256, 256, 512, 512, 512, 512, 512, 512, 1024] #4924
         self.all_duplication_indices = {}
         self.percentage = 0.5
         # self.percentage_list = [0.70, 0.70, 0.70, 0.70, 0.70, 0.70, 0.56, 0.2, 0.7, 0.7, 0.27, 0.2]
         # self.percentage_list = [0.1431, 0.1431, 0.1431, 0.1431, 0.1431, 0.1431, 0.1145, 0.0429, 0.1431, 0.1431, 0.0572, 0.0429]
         # self.percentage_list = [0.7, 0.5, 0.5, 0.1, 0.04, 0.1, 0.1, 0.2, 0.04, 0.03, 0.025,
         #                         0.03]
+        # dup / all = 10
         self.percentage_list = [0, 0, 0, 0, 0., 0, 0, 0, 0, 0, 0, 0.48]
 
         # self.percentage_list = [0.5] * 12
@@ -193,10 +194,16 @@ class SSD(nn.Module):
                 x_zero = torch.zeros(size).to(device)
                 x[random_index] = 1
                 x = x.reshape(size).to(device)
+                random_index1 = torch.randperm(total_dim * self.percentage_list[k - 1])[:int(total_dim * self.percentage_list[k - 1] * self.weights_error)]
+                x1 = torch.zeros(total_dim)
+                x1[random_index1] = 1
+                x1 = x1.reshape(size).to(device)
                 with torch.no_grad():
                     # err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
                     err_to_kernel = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
-                    avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
+                    err_to_origin = torch.where(x1 == 0, self.weights_copy[k][i].weight.data, x_zero)
+                    # avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
+                    avg_kernel = (err_to_origin + err_to_kernel) / 2
                     if flag:
                         # print(err_to_kernel.size(), self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])].size())
                         # err_to_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]] = avg_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]]
