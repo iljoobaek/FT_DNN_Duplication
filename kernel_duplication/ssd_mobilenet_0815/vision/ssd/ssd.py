@@ -194,7 +194,7 @@ class SSD(nn.Module):
                 x_zero = torch.zeros(size).to(device)
                 x[random_index] = 1
                 x = x.reshape(size).to(device)
-                random_index1 = torch.randperm(total_dim * self.percentage_list[k - 1])[:int(total_dim * self.percentage_list[k - 1] * self.weights_error)]
+                random_index1 = torch.randperm(int(total_dim * self.percentage_list[k - 1]))[:int(total_dim * self.percentage_list[k - 1] * self.weights_error)]
                 x1 = torch.zeros(total_dim)
                 x1[random_index1] = 1
                 x1 = x1.reshape(size).to(device)
