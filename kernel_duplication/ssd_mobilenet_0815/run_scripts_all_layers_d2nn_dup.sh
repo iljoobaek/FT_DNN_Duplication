@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=1
-NUM_DUP=0.5
+NUM_DUP=0.1
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
 DATAPATH=/home/rtml/data/VOCdevkit/VOC2007
