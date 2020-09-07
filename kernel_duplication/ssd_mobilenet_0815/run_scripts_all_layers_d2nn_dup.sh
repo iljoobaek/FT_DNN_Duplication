@@ -10,7 +10,7 @@ ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
 echo "Entropy" >> ${SAVEFILE}
 #for NUM_DUP in $(seq 0.01 0.02 0.09)
 #do
-for WERR in $(seq 0.03 0.01 0.03)
+for WERR in $(seq 0.01 0.01 0.01)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do

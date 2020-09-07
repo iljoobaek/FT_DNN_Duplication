@@ -256,8 +256,8 @@ def cal_entropy_each_layer(model):
         # loss = F.cross_entropy(output, target)
         # loss.backward()
 
-        for j, out in enumerate(model.layerwise_entropy):
-            print(out)
+        for j, out in enumerate(model.layerwise_entropy_p):
+            importance_list.append(out)
             # print(importance_list[-1].size())
 
         break
@@ -468,7 +468,19 @@ if __name__ == '__main__':
             # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
             net_imp.load_state_dict(weights_imp)
             net_imp.entropy_flag_p = True
-            cal_entropy_each_layer(net_imp)
+            importance = cal_entropy_each_layer(net_imp)
+            for k in net.all_layer_indices:
+                # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+
+                # print(len(importance[0]))
+                tmp = importance[k - 1]
+                # tmp = importance[layer_id[k]].sum(2).sum(1)
+                # print(layer_mp[k].shape)
+                final = torch.stack((tmp, index), axis=0)
+                final = final.sort(dim=1, descending=True)
+                net.all_duplication_indices[k] = final.indices[0]
+
         else:
             print("random:")
             # for k in {1}:
