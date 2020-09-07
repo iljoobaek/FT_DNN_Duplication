@@ -357,6 +357,7 @@ class SSD(nn.Module):
                         xtemp = torch.flatten(feature.mean(0), start_dim=1)
                         entropy = -self.softmax(xtemp) * self.logsoftmax(xtemp)
                         print(xtemp.size(), entropy.size())
+                        print(self.softmax(xtemp).sum(1))
                         exit()
             if added_layer:
                 y = added_layer(x)
