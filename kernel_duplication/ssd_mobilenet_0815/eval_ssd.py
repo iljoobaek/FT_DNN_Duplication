@@ -478,7 +478,7 @@ if __name__ == '__main__':
                 # tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
-                final = final.sort(dim=1, descending=True)
+                final = final.sort(dim=1, descending=False)
                 net.all_duplication_indices[k] = final.indices[0]
 
         else:

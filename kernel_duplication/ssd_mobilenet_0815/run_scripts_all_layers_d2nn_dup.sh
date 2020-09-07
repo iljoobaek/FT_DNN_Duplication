@@ -18,7 +18,7 @@ do
 echo "Error=${WERR}, Dup percentage=${NUM_DUP}" >> ${SAVEFILE}
 for ERR in $(seq 0.01 0.01 0.1)
 do
-python eval_ssd.py --error_rate ${ERR} --percent_duplication ${NUM_DUP} --run_original False --duplicated True --ft_type random --dataset_type voc --dataset ${DATAPATH} --net mb1-ssd --trained_model ${ATMODEL} --label_file models/voc-model-labels.txt --weight_index ${IDX} --weight_error ${WERR} --result_save_file ${SAVEFILE}
+python eval_ssd.py --error_rate ${ERR} --percent_duplication ${NUM_DUP} --run_original False --duplicated True --ft_type entropy_p --dataset_type voc --dataset ${DATAPATH} --net mb1-ssd --trained_model ${ATMODEL} --label_file models/voc-model-labels.txt --weight_index ${IDX} --weight_error ${WERR} --result_save_file ${SAVEFILE}
 
 done
 done
