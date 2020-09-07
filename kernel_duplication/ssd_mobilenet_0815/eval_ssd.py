@@ -229,6 +229,42 @@ def cal_entropy(model):
     return importance_list
 
 
+def cal_entropy_each_layer(model):
+    model.to(DEVICE)
+    for i in model.all_layer_indices:
+        model.weights_copy[i] = copy.deepcopy(model.base_net[i])
+        model.weights_copy[i].eval()
+    importance_list = []
+    config = mobilenetv1_ssd_config
+    train_transform = TrainAugmentation(config.image_size, config.image_mean, config.image_std)
+    target_transform = MatchPrior(config.priors, config.center_variance,
+                                  config.size_variance, 0.5)
+    imp_dataset = VOCDataset(args.dataset, transform=train_transform, target_transform=target_transform)
+    data_loader = DataLoader(imp_dataset, 16, shuffle=True)
+    criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
+                             center_variance=0.1, size_variance=0.2, device=DEVICE)
+    for i, data in enumerate(data_loader):
+        images, boxes, labels = data
+        images = images.to(DEVICE)
+        boxes = boxes.to(DEVICE)
+        labels = labels.to(DEVICE)
+
+        # forward pass
+        confidence, locations, _ = model(images)
+        regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)
+        loss = regression_loss + classification_loss
+        # loss = F.cross_entropy(output, target)
+        # loss.backward()
+
+        for j, out in enumerate(model.layerwise_entropy):
+            print(out)
+            # print(importance_list[-1].size())
+
+        break
+
+    return importance_list
+
+
 # D2NN: weight sum evaluation
 def weight_sum_eval(model):
     weights = model.state_dict()
@@ -425,7 +461,14 @@ if __name__ == '__main__':
             net_imp.entropy_flag = True
             cal_entropy(net_imp)
             exit()
-        
+        elif args.ft_type == "entropy_p":
+            print("entropy each layer:")
+            net_imp = create_mobilenetv1_ssd(len(class_names))
+            weights_imp = copy.deepcopy(net.state_dict())
+            # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
+            net_imp.load_state_dict(weights_imp)
+            net_imp.entropy_flag_p = True
+            cal_entropy_each_layer(net_imp)
         else:
             print("random:")
             # for k in {1}:

@@ -81,6 +81,9 @@ class SSD(nn.Module):
         self.softmax = nn.Softmax(dim = 0)
         self.logsoftmax = nn.LogSoftmax(dim = 0)
 
+        self.entropy_flag_p = False
+        self.layerwise_entropy_p = []
+
     def error_injection(self, x, error_rate, duplicate_index, is_origin, n, x_dup=None):
         """
             Simulate Error Injection.
@@ -349,6 +352,11 @@ class SSD(nn.Module):
                         entropy = -self.softmax(feature.sum(3).sum(2).mean(0)) * self.logsoftmax(feature.sum(3).sum(2).mean(0))
                         print(entropy.size())
                         self.layerwise_entropy.append(entropy.sum())
+                    elif self.entropy_flag_p:
+                        feature = x.clone().detach()
+                        xtemp = torch.flatten(feature.mean(0), start_dim=1)
+                        print(xtemp.size())
+                        exit()
             if added_layer:
                 y = added_layer(x)
             else:
