@@ -48,10 +48,10 @@ class SSD(nn.Module):
         self.weights_error = 0
 
         # attention
-        self.fc1 = nn.Linear(64, 32, bias=False)
-        self.fc2 = nn.Linear(32, 64, bias=False)
+        # self.fc1 = nn.Linear(64, 32, bias=False)
+        # self.fc2 = nn.Linear(32, 64, bias=False)
 
-        self.conv1_attention = nn.Conv2d(64, 64, 3, 1, 1, groups=64, bias=False)
+        # self.conv1_attention = nn.Conv2d(64, 64, 3, 1, 1, groups=64, bias=False)
 
         # importance
         self.output = []
@@ -74,6 +74,12 @@ class SSD(nn.Module):
 
         # self.percentage_list = [0.5] * 12
         # self.percentage_list = [1] * 12
+        self.vgg_all_width = {0: 64, 2: 64, 5: 128, 7: 128, 10: 256, 12: 256, 14: 256, 
+                              17: 512, 19: 512, 21: 512, 24: 512, 26: 512, 28: 512, 
+                              31: 1024, 33: 1024}
+        self.vgg_percentage_list = {0: 0.5, 2: 0.5, 5: 0.5, 7: 0.5, 10: 0.5, 12: 0.5, 14: 0.5, 
+                                    17: 0.5, 19: 0.5, 21: 0.5, 24: 0.5, 26: 0.5, 28: 0.5, 
+                                    31: 0.5, 33: 0.5}
         
         # entropy
         self.layerwise_entropy = []
@@ -84,20 +90,19 @@ class SSD(nn.Module):
         self.entropy_flag_p = False
         self.layerwise_entropy_p = []
 
-    def error_injection(self, x, error_rate, duplicate_index, is_origin, n, x_dup=None):
+    def error_injection(self, x, error_rate, duplicate_index, is_origin):
         """
             Simulate Error Injection.
             :param x: tensor, input tensor (in our case CNN feature map)
             :param error_rate: double, rate of errors
             :return: tensor, modified tensor with error injected
         """
-        # print(x.shape)
+        
         device = torch.device("cuda")
         # device = torch.device("cpu")
         origin_shape = x.shape
-        # total_dim = x.flatten().shape[0]
+        n = origin_shape[1]
         total_dim = x[:, :n, :, :].flatten().shape[0]
-        # change_dim = x[:, :self.num_duplication, :, :].flatten().shape[0]
 
         change_dim = x[:, :int(n * self.percentage), :, :].flatten().shape[0]
         if is_origin:
@@ -115,26 +120,11 @@ class SSD(nn.Module):
         # x = x.flatten()
         # zeromat = torch.zeros(x.size()).to(device)
         random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
-        # x[random_index1] = zeromat[random_index1]
         x[random_index1] = 0
-        # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
-
-        # if x_dup is not None:
-        #     x_duplicate = x_dup[:, duplicate_index, :, :].flatten()
-            # random_index2 = torch.randperm(change_dim)[:int(change_dim * error_rate)]
-            # x_duplicate[random_index2] = 0
-            # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze()
-            # x_duplicate[random_index2] = m.sample(x[random_index2].size()).squeeze() - 1 - x_duplicate[random_index2]
-            # x_duplicate[change_dim:total_dim] = x[change_dim:total_dim]
-            # x = (x+x_duplicate)/2
-
-        # x[random_index1] = m.sample(x[random_index1].size()).squeeze().to(device)
-        # x[random_index1] = m.sample(x[random_index1].size()).squeeze() - 1 - x[random_index1]
-
 
         x = x.reshape(origin_shape)
         x = x[:, reverse_index, :, :]
-
+        
         return x
 
     def _kernel_error_injection(self, error_rate, unit):
@@ -154,17 +144,30 @@ class SSD(nn.Module):
 
     def _kernel_recover_and_err(self, k):
         device = self.device
-        for i, module in enumerate(self.base_net[k]):
-            if isinstance(module, nn.Conv2d):
-                size = module.weight.data.size()
-                total_dim = torch.zeros(size).flatten().shape[0]
-                random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
-                x = torch.zeros(total_dim)
-                x_zero = torch.zeros(size).to(device)
-                x[random_index] = 1
-                x = x.reshape(size).to(device)
-                with torch.no_grad():
-                    module.weight.data = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
+        if isinstance(self.base_net[k], nn.Sequential):
+            for i, module in enumerate(self.base_net[k]):
+                if isinstance(module, nn.Conv2d):
+                    size = module.weight.data.size()
+                    total_dim = torch.zeros(size).flatten().shape[0]
+                    random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
+                    x = torch.zeros(total_dim)
+                    x_zero = torch.zeros(size).to(device)
+                    x[random_index] = 1
+                    x = x.reshape(size).to(device)
+                    with torch.no_grad():
+                        module.weight.data = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
+        elif isinstance(self.base_net[k], nn.Conv2d):
+            # print(type(self.base_net[k]), k)
+            module = self.base_net[k]
+            size = module.weight.data.size()
+            total_dim = torch.zeros(size).flatten().shape[0]
+            random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
+            x = torch.zeros(total_dim)
+            x_zero = torch.zeros(size).to(device)
+            x[random_index] = 1
+            x = x.reshape(size).to(device)
+            with torch.no_grad():
+                module.weight.data = torch.where(x == 0, self.weights_copy[k].weight.data, x_zero)
 
     def _recover_weight(self, unit, origin):
         for i, module in enumerate(unit):
@@ -188,35 +191,58 @@ class SSD(nn.Module):
     def weights_error_average(self, k):
         device = self.device
         flag = False
-        for i, module in enumerate(self.base_net[k]):
-            if isinstance(module, nn.Conv2d):
-                size = module.weight.data.size()
-                total_dim = torch.zeros(size).flatten().shape[0]
-                random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
-                x = torch.zeros(total_dim)
-                x_zero = torch.zeros(size).to(device)
-                x[random_index] = 1
-                x = x.reshape(size).to(device)
-                random_index1 = torch.randperm(int(total_dim * self.percentage_list[k - 1]))[:int(total_dim * self.percentage_list[k - 1] * self.weights_error)]
-                x1 = torch.zeros(total_dim)
-                x1[random_index1] = 1
-                x1 = x1.reshape(size).to(device)
-                with torch.no_grad():
-                    # err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
-                    err_to_kernel = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
-                    err_to_origin = torch.where(x1 == 0, self.weights_copy[k][i].weight.data, x_zero)
-                    # avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
-                    avg_kernel = (err_to_origin + err_to_kernel) / 2
-                    if flag:
-                        # print(err_to_kernel.size(), self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])].size())
-                        # err_to_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]] = avg_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]]
-                        
-                        err_to_kernel[self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])]] = avg_kernel[self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])]]
-                        module.weight.data = err_to_kernel
-                    else:
-                        module.weight.data = avg_kernel
-                if not flag:
-                    flag = True
+        print(type(self.base_net[k]))
+        if isinstance(self.base_net[k], nn.Sequential):
+            for i, module in enumerate(self.base_net[k]):
+                if isinstance(module, nn.Conv2d):
+                    size = module.weight.data.size()
+                    total_dim = torch.zeros(size).flatten().shape[0]
+                    random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
+                    x = torch.zeros(total_dim)
+                    x_zero = torch.zeros(size).to(device)
+                    x[random_index] = 1
+                    x = x.reshape(size).to(device)
+                    random_index1 = torch.randperm(int(total_dim * self.percentage_list[k - 1]))[:int(total_dim * self.percentage_list[k - 1] * self.weights_error)]
+                    x1 = torch.zeros(total_dim)
+                    x1[random_index1] = 1
+                    x1 = x1.reshape(size).to(device)
+                    with torch.no_grad():
+                        # err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
+                        err_to_kernel = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
+                        err_to_origin = torch.where(x1 == 0, self.weights_copy[k][i].weight.data, x_zero)
+                        # avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
+                        avg_kernel = (err_to_origin + err_to_kernel) / 2
+                        if flag:
+                            # print(err_to_kernel.size(), self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])].size())
+                            # err_to_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]] = avg_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]]
+                            
+                            err_to_kernel[self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])]] = avg_kernel[self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])]]
+                            module.weight.data = err_to_kernel
+                        else:
+                            module.weight.data = avg_kernel
+                    if not flag:
+                        flag = True
+        elif isinstance(self.base_net[k], nn.Conv2d):
+            module = self.base_net[k]
+            size = module.weight.data.size()
+            total_dim = torch.zeros(size).flatten().shape[0]
+            random_index = torch.randperm(total_dim)[:int(total_dim * self.weights_error)]
+            x = torch.zeros(total_dim)
+            x_zero = torch.zeros(size).to(device)
+            x[random_index] = 1
+            x = x.reshape(size).to(device)
+            random_index1 = torch.randperm(int(total_dim * self.vgg_percentage_list[k]))[:int(total_dim * self.vgg_percentage_list[k] * self.weights_error)]
+            x1 = torch.zeros(total_dim)
+            x1[random_index1] = 1
+            x1 = x1.reshape(size).to(device)
+            with torch.no_grad():
+                # err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
+                err_to_kernel = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
+                err_to_origin = torch.where(x1 == 0, self.weights_copy[k][i].weight.data, x_zero)
+                # avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
+                avg_kernel = (err_to_origin + err_to_kernel) / 2
+                err_to_kernel[self.all_duplication_indices[k][:int(self.vgg_all_width[k] * self.vgg_percentage_list[k])]] = avg_kernel[self.all_duplication_indices[k][:int(self.vgg_all_width[k] * self.vgg_percentage_list[k])]]
+                module.weight.data = err_to_kernel
 
     def error_injection_weights_all(self, error_rate):
         # print("Inject error to all layers")
@@ -282,6 +308,11 @@ class SSD(nn.Module):
         start_layer_index = 0
         header_index = 0
         total_time = 0
+        terminal_index = 0
+        if isinstance(self.source_layer_indexes[0], tuple):
+            terminal_index = self.source_layer_indexes[0][0]
+        else:
+            terminal_index = self.source_layer_indexes[0]
         for end_layer_index in self.source_layer_indexes:
             if isinstance(end_layer_index, GraphPath):
                 path = end_layer_index
@@ -298,51 +329,24 @@ class SSD(nn.Module):
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
-                if not self.run_original and 0 < start_layer_index + i <= self.source_layer_indexes[0]:
+                if not self.run_original and 0 < start_layer_index + i <= terminal_index:
                     if self.error:
                         if self.duplicated:
+                            # print(start_layer_index + i)
                             self.weights_error_average(start_layer_index + i)
                         else:
+                            # print(start_layer_index + i)
                             self._kernel_recover_and_err(start_layer_index + i)
-                    # x_copy = copy.deepcopy(x)
-                    # x_copy = x.detach().clone()
-                    # pass
-
+                # exit()
 
                 x = layer(x) # original kernel
-                # x_tmp = x.detach().clone()
-                # print(start_layer_index + i, x.size())
-                # if not self.run_original and start_layer_index + i == self.weight_index:
-                if not self.run_original and 0 < start_layer_index + i <= self.source_layer_indexes[0]:
+                if not self.run_original and 0 < start_layer_index + i <= terminal_index:
                     if self.error:
-                        # print(self.error)
-
-                        # if self.duplicated:
-                        #     # x_dup = self.weights_copy[self.weight_index](x_copy) # duplicated kernel
-                        #     x_dup = self.weights_copy[start_layer_index + i](x_copy)
-                        #     # x = self.error_injection(x, self.error, self.duplicate_index1, is_origin=False, n=self.width, x_dup=x_dup)
-                        #     start = time.time()
-                        #     x = self.error_injection(x, self.error, self.all_duplication_indices[start_layer_index + i],
-                        #                              is_origin=False, n=self.all_width[start_layer_index + i - 1],
-                        #                              x_dup=x_dup)
-                        #     total_time += time.time() - start
-                        #     x = (x + x_dup) / 2
-                        #x_whole = (x + x_dup) / 2
-                        #x[int(self.all_width[k-1] * self.percentage)] = x_whole[int(self.all_width[k-1] * self.percentage)]
-
-                        # else:
                         start = time.time()
-                        # Check this
-                        x = self.error_injection(x, self.error, None, is_origin=True, n=self.all_width[start_layer_index + i - 1])
+                        x = self.error_injection(x, self.error, None, is_origin=True)
                         total_time += time.time() - start
-                    elif self.attention_mode:
-                        # print("train attention")
-                        # x = x.permute(0, 2, 3, 1)
-                        # x = self.fc1(x)
-                        # x = nn.Tanh()(x)
-                        # x = self.fc2(x)
-                        # x = x.permute(0, 3, 1, 2)
-                        x = self.conv1_attention(x)
+                    # elif self.attention_mode:
+                    #     x = self.conv1_attention(x)
                     elif self.is_importance:
                         x.retain_grad()
                         self.output.append(x)

@@ -352,9 +352,14 @@ if __name__ == '__main__':
     net = net.to(DEVICE)
 
     net.weight_index = args.weight_index
+    
+    if args.net == 'vgg16-ssd':
+        all_layer_indices = [0, 2, 5, 7, 10, 12, 14, 17, 19, 21, 24, 26, 28, 31, 33]
+    elif args.net == 'mb1-ssd': 
+        all_layer_indices = range(1, 13)
     # net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     # net.weights_copy[net.weight_index].eval()
-    for i in net.all_layer_indices:
+    for i in all_layer_indices:
         net.weights_copy[i] = copy.deepcopy(net.base_net[i])
         net.weights_copy[i].eval()
 
@@ -378,7 +383,8 @@ if __name__ == '__main__':
         num_layer_mp = {1: 64, 2: 128, 3: 256}
         # layer_mp = {1: net.fc1.weight, 2: net.fc3.weight, 3: net.fc5.weight}
         # layer_mp = {1: net.fc1.weight}
-        layer_mp = {1: net.conv1_attention.weight}
+        # layer_mp = {1: net.conv1_attention.weight}
+        layer_mp = {}
 
         if args.ft_type == "attention":
             print("attention:")
@@ -409,7 +415,7 @@ if __name__ == '__main__':
             importance = cal_importance(net_imp)
             net_imp.is_importance = False
             # for k in {1}:
-            for k in net.all_layer_indices:
+            for k in all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
                 index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
                 
@@ -431,7 +437,7 @@ if __name__ == '__main__':
             print("d2nn:")
             # for k in {1}:
             weight_sum, _ = weight_sum_eval(net)
-            for k in net.all_layer_indices:
+            for k in all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
                 index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
                 # exit()
@@ -469,7 +475,7 @@ if __name__ == '__main__':
             net_imp.load_state_dict(weights_imp)
             net_imp.entropy_flag_p = True
             importance = cal_entropy_each_layer(net_imp)
-            for k in net.all_layer_indices:
+            for k in all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
                 index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
 
