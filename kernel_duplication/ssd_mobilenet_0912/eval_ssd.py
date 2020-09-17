@@ -573,8 +573,8 @@ if __name__ == '__main__':
         boxes, labels, probs, _ = predictor.predict(image)
         # print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
         indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
-        indexes = indexes.cuda()
-        labels = labels.cuda()
+        # indexes = indexes.cuda()
+        # labels = labels.cuda()
         # print(indexes.is_cuda, labels.is_cuda, probs.is_cuda, boxes.is_cuda)
         results.append(torch.cat([
             indexes.reshape(-1, 1),
@@ -593,6 +593,7 @@ if __name__ == '__main__':
         prediction_path = eval_path / f"det_test_{class_name}.txt"
         with open(prediction_path, "w") as f:
             sub = results[results[:, 1] == class_index, :]
+            # sub = sub.cpu()
             for i in range(sub.size(0)):
                 prob_box = sub[i, 2:].numpy()
                 image_id = dataset.ids[int(sub[i, 0])]

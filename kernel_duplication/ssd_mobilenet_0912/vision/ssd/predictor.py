@@ -44,10 +44,10 @@ class Predictor:
         if not prob_threshold:
             prob_threshold = self.filter_threshold
         # this version of nms is slower on GPU, so we move data to CPU.
-        # boxes = boxes.to(cpu_device)
-        # scores = scores.to(cpu_device)
-        boxes = boxes.to(self.device)
-        scores = scores.to(self.device)
+        boxes = boxes.to(cpu_device)
+        scores = scores.to(cpu_device)
+        # boxes = boxes.to(self.device)
+        # scores = scores.to(self.device)
         picked_box_probs = []
         picked_labels = []
 
