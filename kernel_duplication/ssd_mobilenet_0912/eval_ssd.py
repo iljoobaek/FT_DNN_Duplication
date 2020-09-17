@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from vision.ssd.config import mobilenetv1_ssd_config
+from vision.ssd.config import mobilenetv1_ssd_config, vgg_ssd_config
 from vision.nn.multibox_loss import MultiboxLoss
 from vision.ssd.vgg_ssd import create_vgg_ssd, create_vgg_ssd_predictor
 from vision.ssd.mobilenetv1_ssd import create_mobilenetv1_ssd, create_mobilenetv1_ssd_predictor
@@ -19,6 +19,7 @@ import numpy as np
 import logging
 import sys
 import copy
+import time
 from vision.ssd.mobilenet_v2_ssd_lite import create_mobilenetv2_ssd_lite, create_mobilenetv2_ssd_lite_predictor
 
 
@@ -138,7 +139,7 @@ def compute_average_precision_per_class(num_true_cases, gt_boxes, difficult_case
 
 
 # SubFlow calculate importance
-def cal_importance(model):
+def cal_importance(model, config):
     """
     s = o^2 * H
 
@@ -151,7 +152,6 @@ def cal_importance(model):
         model.weights_copy[i] = copy.deepcopy(model.base_net[i])
         model.weights_copy[i].eval()
     importance_list = []
-    config = mobilenetv1_ssd_config
     train_transform = TrainAugmentation(config.image_size, config.image_mean, config.image_std)
     target_transform = MatchPrior(config.priors, config.center_variance,
                                   config.size_variance, 0.5)
@@ -175,10 +175,11 @@ def cal_importance(model):
         #loss.backward()
 
         for j, out in enumerate(model.output):
+            # print(out.size())
             hessian_approximate = out.grad ** 2  # grad^2 -> hessian
             importance = hessian_approximate * (out.detach().clone() ** 2)
             importance_list.append(importance.mean(dim=0))
-            #print(importance_list[-1].size())
+            # print(importance_list[-1].size())
 
         break
 
@@ -266,14 +267,18 @@ def cal_entropy_each_layer(model):
 
 
 # D2NN: weight sum evaluation
-def weight_sum_eval(model):
+def weight_sum_eval(model, nettype):
     weights = model.state_dict()
     evaluation = []
     names = []
+    go_next = {2: 5, 5: 7, 7: 10, 10: 12, 12: 14, 14: 17, 17: 19, 19: 21, 21: 24}
     # need to find the connection between conv and fc
-    for i in model.all_layer_indices:
-        evaluation.append(weights['base_net.' + str(i + 1) + '.3' + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
-
+    for ii, i in enumerate(model.all_layer_indices):
+        if nettype == 'vgg16-ssd':
+            evaluation.append(weights['base_net.' + str(go_next[i]) + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+        elif nettype == 'mb1-ssd': 
+            evaluation.append(weights['base_net.' + str(i + 1) + '.3' + '.weight'].detach().clone().abs().sum(dim=3).sum(dim=2).sum(dim=0))
+        # print(evaluation[-1].size())
     # for name, m in model.named_modules():
         # print(name, m)
         # if name == 'base_net.12.3':
@@ -354,13 +359,19 @@ if __name__ == '__main__':
     net.weight_index = args.weight_index
     
     if args.net == 'vgg16-ssd':
-        all_layer_indices = [0, 2, 5, 7, 10, 12, 14, 17, 19, 21, 24, 26, 28, 31, 33]
+        net.all_layer_indices = [2, 5, 7, 10, 12, 14, 17, 19, 21]
+        net.all_width = {0: 64, 2: 64, 5: 128, 7: 128, 10: 256, 12: 256, 14: 256, 
+                              17: 512, 19: 512, 21: 512, 24: 512, 26: 512, 28: 512, 
+                              31: 1024, 33: 1024}
     elif args.net == 'mb1-ssd': 
-        all_layer_indices = range(1, 13)
+        net.all_layer_indices = range(1, 13)
+        net.all_width = {1: 64, 2: 128, 3: 128, 4: 256, 5: 256, 6: 512, 7: 512, 8: 512, 
+                         9: 512, 10: 512, 11: 512, 12: 1024}
     # net.weights_copy[net.weight_index] = copy.deepcopy(net.base_net[net.weight_index])
     # net.weights_copy[net.weight_index].eval()
-    for i in all_layer_indices:
+    for i in net.all_layer_indices:
         net.weights_copy[i] = copy.deepcopy(net.base_net[i])
+        # print(net.weights_copy[i].weight.data.size())
         net.weights_copy[i].eval()
 
     # net.error_injection_weights(0.1)
@@ -405,27 +416,38 @@ if __name__ == '__main__':
                     net.duplicate_index3 = final.indices[0]
         elif args.ft_type == "importance":
             print("importance:")
-            net_imp = create_mobilenetv1_ssd(len(class_names))
+            if args.net == 'vgg16-ssd':
+                net_imp = create_vgg_ssd(len(class_names))
+                config = vgg_ssd_config
+            elif args.net == 'mb1-ssd':
+                net_imp = create_mobilenetv1_ssd(len(class_names))
+                config = mobilenetv1_ssd_config
+            net_imp.all_layer_indices = net.all_layer_indices
+            net_imp.all_width = net.all_width
+            # net_imp = create_mobilenetv1_ssd(len(class_names))
             weights_imp = copy.deepcopy(net.state_dict())
             # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
             net_imp.load_state_dict(weights_imp)
 
             net_imp.is_importance = True
             # net_imp.weight_index = args.weight_index
-            importance = cal_importance(net_imp)
+            importance = cal_importance(net_imp, config)
             net_imp.is_importance = False
             # for k in {1}:
-            for k in all_layer_indices:
+            cnt = 0
+            for k in net.all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
-                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k]).type(torch.float).to(DEVICE)
                 
                 # print(len(importance[0]))
-                tmp = importance[k - 1].sum(2).sum(1)
+                # print(importance[cnt].size())
+                tmp = importance[cnt].sum(2).sum(1)
                 # tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
                 net.all_duplication_indices[k] = final.indices[0]
+                cnt += 1
                 # if k == 1:
                 #     net.duplicate_index1 = final.indices[0]
                 #     print(net.duplicate_index1)
@@ -436,17 +458,19 @@ if __name__ == '__main__':
         elif args.ft_type == "d2nn":
             print("d2nn:")
             # for k in {1}:
-            weight_sum, _ = weight_sum_eval(net)
-            for k in all_layer_indices:
+            weight_sum, _ = weight_sum_eval(net, args.net)
+            cnt = 0
+            for k in net.all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
-                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k]).type(torch.float).to(DEVICE)
                 # exit()
                 # tmp = torch.sum(layer_mp[k], axis=0)
                 # exit()
                 #tmp = torch.mul(weight_sum[0], weight_sum[1])
                 #tmp = weight_sum[0] + weight_sum[1]
                 # print(tmp.size())
-                tmp = weight_sum[k - 1]
+                tmp = weight_sum[cnt]
+                cnt += 1
                 # print(layer_mp[k].shape, tmp.size())
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
@@ -475,7 +499,7 @@ if __name__ == '__main__':
             net_imp.load_state_dict(weights_imp)
             net_imp.entropy_flag_p = True
             importance = cal_entropy_each_layer(net_imp)
-            for k in all_layer_indices:
+            for k in net.all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
                 index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
 
@@ -492,8 +516,8 @@ if __name__ == '__main__':
             # for k in {1}:
             for k in net.all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
-                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
-                tmp = torch.randn(net.all_width[k - 1]).to(DEVICE)
+                index = torch.arange(net.all_width[k]).type(torch.float).to(DEVICE)
+                tmp = torch.randn(net.all_width[k]).to(DEVICE)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
                 net.all_duplication_indices[k] = final.indices[0]
@@ -534,9 +558,13 @@ if __name__ == '__main__':
         sys.exit(1)
 
     results = []
+    begin = time.time()
     for i in range(len(dataset)):
         if i % 100 == 0:
             print("process image", i, "of", len(dataset))
+            # if i == 100:
+                # print(time.time() - begin)
+                # exit()
         timer.start("Load Image")
         image = dataset.get_image(i)
         # print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
@@ -545,6 +573,8 @@ if __name__ == '__main__':
         boxes, labels, probs, _ = predictor.predict(image)
         # print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
         indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
+        indexes = indexes.cuda()
+        labels = labels.cuda()
         # print(indexes.is_cuda, labels.is_cuda, probs.is_cuda, boxes.is_cuda)
         results.append(torch.cat([
             indexes.reshape(-1, 1),

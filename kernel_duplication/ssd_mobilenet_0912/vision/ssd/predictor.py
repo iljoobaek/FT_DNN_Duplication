@@ -28,6 +28,7 @@ class Predictor:
 
     def predict(self, image, top_k=-1, prob_threshold=None):
         cpu_device = torch.device("cpu")
+        # gpu_device = torch.device("gpu")
         height, width, _ = image.shape
         image = self.transform(image)
         images = image.unsqueeze(0)
@@ -36,16 +37,17 @@ class Predictor:
         with torch.no_grad():
             self.timer.start()
             scores, boxes, err_t = self.net.forward(images)
+            # print(err_t)
             # print("Inference time: ", self.timer.end())
         boxes = boxes[0]
         scores = scores[0]
         if not prob_threshold:
             prob_threshold = self.filter_threshold
         # this version of nms is slower on GPU, so we move data to CPU.
-        boxes = boxes.to(cpu_device)
-        scores = scores.to(cpu_device)
-        # boxes = boxes.to(self.device)
-        # scores = scores.to(self.device)
+        # boxes = boxes.to(cpu_device)
+        # scores = scores.to(cpu_device)
+        boxes = boxes.to(self.device)
+        scores = scores.to(self.device)
         picked_box_probs = []
         picked_labels = []
 
