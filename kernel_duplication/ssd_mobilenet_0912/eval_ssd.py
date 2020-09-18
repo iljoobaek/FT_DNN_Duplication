@@ -21,6 +21,7 @@ import sys
 import copy
 import time
 from vision.ssd.mobilenet_v2_ssd_lite import create_mobilenetv2_ssd_lite, create_mobilenetv2_ssd_lite_predictor
+import torch.backends.cudnn as cudnn
 
 
 parser = argparse.ArgumentParser(description="SSD Evaluation on VOC Dataset.")
@@ -50,6 +51,7 @@ parser.add_argument('--weight_index', default=1, type=int,
                     help='which layers to duplicate')
 parser.add_argument('--ft_type', default='none', type=str, help='Type of kernel duplication')
 parser.add_argument('--result_save_file', default='result.txt', type=str, help='Save the result')
+parser.add_argument('--seed', default=1, type=int, help='random seed')
 args = parser.parse_args()
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() and args.use_cuda else "cpu")
 
@@ -165,7 +167,6 @@ def cal_importance(model, config):
         boxes = boxes.to(DEVICE)
         labels = labels.to(DEVICE)
 
-
         # forward pass
         confidence, locations, _ = model(images)
         regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)
@@ -173,6 +174,7 @@ def cal_importance(model, config):
         loss.backward()
         #loss = F.cross_entropy(output, target)
         #loss.backward()
+        # print(len(model.output))
 
         for j, out in enumerate(model.output):
             # print(out.size())
@@ -314,6 +316,13 @@ if __name__ == '__main__':
     eval_path.mkdir(exist_ok=True)
     timer = Timer()
     class_names = [name.strip() for name in open(args.label_file).readlines()]
+    
+    #random seed 
+    np.random.seed(args.seed)
+    cudnn.deterministic = True
+    torch.manual_seed(args.seed)
+    cudnn.enabled = True
+    torch.cuda.manual_seed(args.seed)
 
     if args.dataset_type == "voc":
         dataset = VOCDataset(args.dataset, is_test=True)

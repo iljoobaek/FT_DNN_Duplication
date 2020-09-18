@@ -317,6 +317,7 @@ class SSD(nn.Module):
             terminal_index = self.source_layer_indexes[0][0]
         else:
             terminal_index = self.source_layer_indexes[0]
+        # print("terminal_index", terminal_index)
         for end_layer_index in self.source_layer_indexes:
             if isinstance(end_layer_index, GraphPath):
                 path = end_layer_index
@@ -333,7 +334,7 @@ class SSD(nn.Module):
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
-                if not self.run_original and 0 < start_layer_index + i <= terminal_index and i in self.all_layer_indices:
+                if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
                     if self.error:
                         start = time.time()
                         if self.duplicated:
@@ -346,7 +347,7 @@ class SSD(nn.Module):
                 # exit()
 
                 x = layer(x) # original kernel
-                if not self.run_original and 0 < start_layer_index + i <= terminal_index and i in self.all_layer_indices:
+                if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
                     if self.error:
                         start = time.time()
                         x = self.error_injection(x, self.error, None, is_origin=True)
@@ -354,6 +355,7 @@ class SSD(nn.Module):
                     # elif self.attention_mode:
                     #     x = self.conv1_attention(x)
                     elif self.is_importance:
+                        # print(start_layer_index + i)
                         x.retain_grad()
                         self.output.append(x)
                     elif self.entropy_flag:
