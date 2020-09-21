@@ -5,7 +5,7 @@ import seaborn as sns; sns.set()
 
 sns.set_style('whitegrid')
 
-path = "results_all_layer_1.txt"
+path = "results_all_layer_2.txt"
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 1]
 width = 0
@@ -51,7 +51,7 @@ with open(path, 'r') as f:
             elif arr[2] == "d2nn":
                 y_sco.append(float(arr[3]))
 
-n_plots = 3
+n_plots = 1
 plt.figure(figsize=(4.8 * n_plots, 4.2))
 # x = np.arange(1, width + 1)
 x = np.arange(1, 11, 1)
@@ -64,9 +64,9 @@ rad = np.array(y_rad_all)
 
 for i in range(n_plots):
     plt.subplot(1, n_plots, i + 1)
-    data = {'x': np.concatenate((np.array(x), np.array(x), np.array(x), np.array(x))),
+    data = {'x': np.tile(np.array(x), 12),
             'y': np.concatenate((ori[idx[i]], imp[idx[i]], sco[idx[i]], rad[idx[i]])),
-            'Duplication Type': ["none"] * len(x) + ["2nd derivative"] * len(x) + ["weight sum"] * len(x) + ["random"] * len(x)}
+            'Duplication Type': ["none"] * len(x) * 3 + ["2nd derivative"] * len(x) * 3 + ["weight sum"] * len(x) * 3 + ["random"] * len(x) * 3}
 
     df = pd.DataFrame(data)
 
