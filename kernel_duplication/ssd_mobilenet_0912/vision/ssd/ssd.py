@@ -206,7 +206,7 @@ class SSD(nn.Module):
                     x = x.reshape(size).to(device)
                     random_index1 = torch.randperm(int(total_dim * self.percentage_list[k - 1]))[:int(total_dim * self.percentage_list[k - 1] * self.weights_error)]
                     x1 = torch.zeros(total_dim)
-                    x1[random_index1] = 1
+                    # x1[random_index1] = 1
                     x1 = x1.reshape(size).to(device)
                     with torch.no_grad():
                         # err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
@@ -348,6 +348,7 @@ class SSD(nn.Module):
 
                 x = layer(x) # original kernel
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
+                    # print((layer.weight.data - self.base_net[start_layer_index: end_layer_index][i].weight.data).sum())
                     if self.error:
                         start = time.time()
                         x = self.error_injection(x, self.error, None, is_origin=True)
@@ -360,7 +361,10 @@ class SSD(nn.Module):
                         self.output.append(x)
                     elif self.entropy_flag:
                         feature = x.clone().detach()
+                        print(feature.sum(3).sum(2).mean(0))
                         print(feature.sum(3).sum(2).mean(0).size())
+                        print(self.softmax(feature.sum(3).sum(2).mean(0)))
+                        print(self.logsoftmax(feature.sum(3).sum(2).mean(0)))
                         entropy = -self.softmax(feature.sum(3).sum(2).mean(0)) * self.logsoftmax(feature.sum(3).sum(2).mean(0))
                         print(entropy.size())
                         self.layerwise_entropy.append(entropy.sum())
