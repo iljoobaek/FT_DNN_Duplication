@@ -11,7 +11,7 @@ ATMODEL=models/mobilenet-v1-ssd-mp-0_675.pth
 echo "Entropy" >> ${SAVEFILE}
 #for NUM_DUP in $(seq 0.01 0.02 0.09)
 #do
-for SEED in $(seq 1 1 1)
+for SEED in $(seq 1 1 2)
 do
 for WERR in $(seq 0.01 0.01 0.01)
 # WERR=0.02
