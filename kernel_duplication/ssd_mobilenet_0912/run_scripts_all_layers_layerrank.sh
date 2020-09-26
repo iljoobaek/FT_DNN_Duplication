@@ -98,8 +98,8 @@ python eval_ssd.py --error_rate ${ERR} \
                    --ft_type d2nn \
                    --dataset_type voc \
                    --dataset ${DATAPATH} \
-                   --net vgg16-ssd \
-                   --trained_model ${MODEL} \
+                   --net mb1-ssd \
+                   --trained_model ${ATMODEL} \
                    --label_file models/voc-model-labels.txt \
                    --weight_index ${IDX} \
                    --weight_error ${WERR} \
