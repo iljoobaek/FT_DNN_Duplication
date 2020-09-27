@@ -6,11 +6,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # from tensorboardX import SummaryWriter
 import os
 import time
-import GPUtil
+# import GPUtil
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.enabled = True
@@ -106,8 +106,10 @@ class SimpleCNN(nn.Module):
         x = self.conv2(x)
         x = self.nonlinear(x)
         x = self.pool2(x)
+        
+        # print(x.size(), N, self.flat_dim)
 
-        flat_x = x.view(N, self.flat_dim)
+        flat_x = x.reshape(N, self.flat_dim)
         out = self.fc1(flat_x)
         out = self.fc2(out)
         return out
@@ -190,6 +192,7 @@ def main():
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             # Forward pass
+            # print(data.size())
             output = model(data)
             # Calculate the loss
             loss = nn.CrossEntropyLoss()(output, target)
@@ -222,15 +225,15 @@ def evaluate(args, error_rate, device, test_loader):
     PATH = "./model/attention/epoch-4.pt"
 
     torch.cuda.empty_cache()
-    print("GPU before loading anything")
-    GPUtil.showUtilization()
+    # print("GPU before loading anything")
+    # GPUtil.showUtilization()
     print("\n")
 
     model = SimpleCNN(error=error_rate, num_duplication=args.num_duplication).to(device)
     model.load_state_dict(torch.load(PATH), strict=False)
 
-    print("GPU after loading the model")
-    GPUtil.showUtilization()
+    # print("GPU after loading the model")
+    # GPUtil.showUtilization()
 
     print("Evaluating model without attention...")
     # evaluate the original model without attention
@@ -316,7 +319,7 @@ def parse_args():
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=5, metavar='N',
                         help='number of epochs to train (default: 14)')
-    parser.add_argument('--num_duplication', type=int, default=5, metavar='N',
+    parser.add_argument('--num_duplication', type=int, default=20, metavar='N',
                         help='number of duplication layers (default: 5)')
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 1.0)')

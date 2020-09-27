@@ -6,10 +6,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
+# import cudnn
+# import matplotlib.pyplot as plt
 # from tensorboardX import SummaryWriter
 import os
 import time
+import copy
 
 class SimpleCNN(nn.Module):
     """
@@ -33,6 +35,8 @@ class SimpleCNN(nn.Module):
         self.evaluate_origin = False
         self.num_duplication = num_duplication
         self.error_spread = error_spread
+        
+        self.importance = False
 
         self.flat_dim = inp_size*inp_size*4
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'relu'))
@@ -60,8 +64,8 @@ class SimpleCNN(nn.Module):
 
         x = x[:, duplicate_index, :, :].flatten()
         random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-        x[random_index] = torch.randn(random_index.size())
-        # x[random_index] = 0
+        # x[random_index] = torch.randn(random_index.size())
+        x[random_index] = 0
         # 1000 32 28 28
         # torch.sum(x)
         x = x.reshape(origin_shape)
@@ -138,14 +142,17 @@ class SimpleCNN(nn.Module):
         N = x.size(0)
         self.output = []
 
-        x = nn.Parameter(x, requires_grad=True)
-        x.retain_grad()  # is there any more elegant way?
-        self.output.append(x)
+        if self.importance:
+            x = nn.Parameter(x, requires_grad=True)
+            x.retain_grad()  # is there any more elegant way?
+            self.output.append(x)
 
         x = self.conv1(x)
         x = self.nonlinear(x)
-        x.retain_grad()
-        self.output.append(x)
+        
+        if self.importance:
+            x.retain_grad()
+            self.output.append(x)
 
 
         '''
@@ -163,11 +170,12 @@ class SimpleCNN(nn.Module):
                     #x_dup = self.duplication(x_copy, x, self.duplicate_index)
                     # x = (x + x_copy) / 2
                 else:
-                    x_copy = self.error_injection(x_copy, self.error, self.duplicate_index, is_origin=False)
-                    #x = self.error_injection_new(x, self.error)
-                    #x_dup = self.duplication(x_copy, x, self.duplicate_index)
-                #x = (x + x_dup) / 2
-                x = (x + x_copy) / 2
+                    # print(self.error)
+                    # x_copy = self.error_injection(x_copy, self.error, self.duplicate_index, is_origin=False)
+                    x = self.error_injection_new(x, self.error)
+                    x_dup = self.duplication(x_copy, x, self.duplicate_index)
+                x = (x + x_dup) / 2
+                # x = (x + x_copy) / 2
 
             else:
                 x = self.error_injection(x, self.error, None, is_origin=True)
@@ -182,17 +190,20 @@ class SimpleCNN(nn.Module):
         x = self.pool1(x)
         x = self.conv2(x)
         x = self.nonlinear(x)
-        x.retain_grad()
-        self.output.append(x)
+        if self.importance:
+            x.retain_grad()
+            self.output.append(x)
         x = self.pool2(x)
 
-        flat_x = x.view(N, self.flat_dim)
+        flat_x = x.reshape(N, self.flat_dim)
         out = self.fc1(flat_x)
-        out.retain_grad()
-        self.output.append(out)
+        if self.importance:
+            out.retain_grad()
+            self.output.append(out)
         out = self.fc2(out)
-        out.retain_grad()
-        self.output.append(out)
+        if self.importance:
+            out.retain_grad()
+            self.output.append(out)
         return out
 
 
@@ -229,7 +240,9 @@ def cal_importance(model, train_data):
     """
 
     importance_list = []
+    model.importance = True
     for batch_idx, (data, target) in enumerate(train_data):
+        data, target = data.to(device), target.to(device)
 
         # forward pass
         output = model(data)
@@ -237,12 +250,12 @@ def cal_importance(model, train_data):
         loss.backward()
 
         for i, out in enumerate(model.output):
-            hessian_approximate = out.grad ** 2  # grad^2 -> hessian
+            hessian_approximate = copy.deepcopy(out.grad) ** 2  # grad^2 -> hessian
             importance = hessian_approximate * (out.detach().clone() ** 2)
             importance_list.append(importance.mean(dim=0))
 
         break
-
+    model.importance = False
     return importance_list
 
 
@@ -378,13 +391,15 @@ def evaluate(error_rate, device, test_loader):
     model = SimpleCNN(error=error_rate).to(device)
     model.load_state_dict(torch.load(PATH), strict=False)
 
-    print("Evaluating model without attention...")
-    # evaluate the original model without attention
-    model.evaluate_origin = True
-    test_loss, test_acc = test(model, device, test_loader)
-    print("final acc without attention: ", test_acc, "\n\n\n")
+    # print("Evaluating model without attention...")
+    # # evaluate the original model without attention
+    # model.evaluate_origin = True
+    # test_loss, test_acc = test(model, device, test_loader)
+    # print("final acc without attention: ", test_acc, "\n\n\n")
+    # with open("results.txt", 'a') as f:
+    #     f.write(str(args.error_rate)+"|spread|none|"+str(test_acc*100)+"\n")
 
-    model.num_duplication = 32
+    model.num_duplication = 10
     #model.error_spread = True
 
     print("Evaluating model with attention...")
@@ -401,8 +416,8 @@ def evaluate(error_rate, device, test_loader):
     model.attention_mode = True
     test_loss, test_acc = test(model, device, test_loader)
     print("final acc with attention: ", test_acc)
-    # with open("results.txt", 'a') as f:
-    #     f.write(str(args.error_rate)+"|spread|attention|"+str(test_acc*100)+"\n")
+    with open("results.txt", 'a') as f:
+        f.write(str(args.error_rate)+"|spread|attention|"+str(test_acc*100)+"\n")
 
     print("Evaluating model with SubFlow importance...")
     index = torch.arange(32).type(torch.float).to(device)
@@ -416,8 +431,8 @@ def evaluate(error_rate, device, test_loader):
     model.attention_mode = True
     test_loss, test_acc = test(model, device, test_loader)
     print("final acc with attention: ", test_acc)
-    # with open("results.txt", 'a') as f:
-    #     f.write(str(args.error_rate)+"|spread|importance|"+str(test_acc*100)+"\n")
+    with open("results.txt", 'a') as f:
+        f.write(str(args.error_rate)+"|spread|importance|"+str(test_acc*100)+"\n")
 
     print("Evaluating model with D2NN weight-sum...")
     index = torch.arange(32).type(torch.float).to(device)
@@ -431,8 +446,8 @@ def evaluate(error_rate, device, test_loader):
     model.attention_mode = True
     test_loss, test_acc = test(model, device, test_loader)
     print("final acc with attention: ", test_acc)
-    # with open("results.txt", 'a') as f:
-    #     f.write(str(args.error_rate)+"|spread|d2nn|"+str(test_acc*100)+"\n")
+    with open("results.txt", 'a') as f:
+        f.write(str(args.error_rate)+"|spread|d2nn|"+str(test_acc*100)+"\n")
 
 
 
@@ -497,6 +512,7 @@ def parse_args():
                         help='how many batches to wait before logging training status')
     parser.add_argument('--val_every', type=int, default=100, metavar='N',
                         help='how many batches to wait before evaluating model')
+    parser.add_argument('--seed', type=int, default=1, help='random seed (default: 1)')
 
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
@@ -509,4 +525,10 @@ def parse_args():
 
 if __name__ == '__main__':
     args, device = parse_args()
+    # np.random.seed(args.seed)
+    # cudnn.benchmark = False
+    # cudnn.deterministic = True
+    torch.manual_seed(args.seed)
+    # cudnn.enabled = True
+    torch.cuda.manual_seed(args.seed)
     main()
