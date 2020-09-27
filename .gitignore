@@ -8,4 +8,5 @@
 *.pdf
 *.jpeg
 *.pkl
+kernel_duplication/data/
 .idea
