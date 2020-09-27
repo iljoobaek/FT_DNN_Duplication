@@ -5,7 +5,7 @@ import seaborn as sns; sns.set()
 
 sns.set_style('whitegrid')
 
-path = "results_all_layer_2.txt"
+path = "results_all_layer_vgg001.txt"
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 0.92, 0.94, 0.96, 0.98, 1]
 # x = [0.1, 0.3, 0.5, 0.7, 0.9, 1]
 width = 0
@@ -80,7 +80,7 @@ for i in range(n_plots):
     plt.ylabel('Accuracy', fontsize=18, fontweight='bold')
     plt.title('Varied Feature Map Error\n Weight Error=' + str((idx[i] + 1)) + '%', fontsize=18, fontweight='bold')
     plt.tick_params(labelsize=18)
-    plt.ylim(0, 0.7)
+    plt.ylim(0.4, 0.8)
 
 plt.tight_layout()
 #plt.show()
