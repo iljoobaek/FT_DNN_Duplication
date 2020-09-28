@@ -129,6 +129,48 @@ class SSD(nn.Module):
         
         return x
 
+    def error_injection_feature(self, x, error_rate, k, x_origin):
+        """
+            Simulate Error Injection.
+            :param x: tensor, input tensor (in our case CNN feature map)
+            :param error_rate: double, rate of errors
+            :return: tensor, modified tensor with error injected
+        """
+        
+        device = torch.device("cuda")
+        # device = torch.device("cpu")
+        origin_shape = x.shape
+        n = origin_shape[1]
+        total_dim = x[:, :n, :, :].flatten().shape[0]
+
+        change_dim = x[:, :int(n * self.percentage), :, :].flatten().shape[0]
+        # if is_origin:
+        #     # random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+        #     # x[random_index1] = 0
+        #     # return
+        #     duplicate_index = torch.arange(n).type(torch.long).to(device)
+        # index = torch.arange(n).type(torch.long).to(device)
+        # final = torch.stack((duplicate_index, index), axis=0)
+        # final = final.sort(dim=1)
+        # reverse_index = final.indices[0]
+
+        # m = torch.distributions.normal.Normal(torch.tensor([1.0]), torch.tensor([1.0]))
+        # x = x[:, duplicate_index, :, :].flatten()
+        x = x.flatten()
+        # zeromat = torch.zeros(x.size()).to(device)
+        # print(x.is_cuda)
+        random_index1 = torch.randperm(total_dim)[:int(total_dim * error_rate)].to(device)
+        x[random_index1] = 0
+
+        x = x.reshape(origin_shape)
+        
+        x_dup = x.clone()
+        x_dup[:, self.all_duplication_indices[k][:int(n * self.percentage)], :, :] = \
+            x_origin[:, self.all_duplication_indices[k][:int(n * self.percentage)], :, :]
+        # x = x[:, reverse_index, :, :]
+        
+        return x_dup
+
     def _kernel_error_injection(self, error_rate, unit):
         # device = torch.device("cpu")
         device = self.device
@@ -334,7 +376,10 @@ class SSD(nn.Module):
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
+                x_original = layer(x)
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
+                    # K+FM
+                    x_original = self.weights_copy[start_layer_index + i](x)
                     if self.error:
                         start = time.time()
                         if self.duplicated:
@@ -351,7 +396,8 @@ class SSD(nn.Module):
                     # print((layer.weight.data - self.base_net[start_layer_index: end_layer_index][i].weight.data).sum())
                     if self.error:
                         start = time.time()
-                        x = self.error_injection(x, self.error, None, is_origin=True)
+                        x = self.error_injection_feature(x, self.error, start_layer_index + i, x_original)
+                        # x = self.error_injection(x, self.error, None, is_origin=True)
                         total_time[0] += time.time() - start
                     # elif self.attention_mode:
                     #     x = self.conv1_attention(x)
