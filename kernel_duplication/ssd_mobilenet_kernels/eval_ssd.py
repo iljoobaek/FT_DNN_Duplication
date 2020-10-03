@@ -258,8 +258,8 @@ if __name__ == '__main__':
 
     timer.start("Load Model")
     # net.weight_index = args.weight_index
-    # width = net.get_layer_width()
-    # net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
+    width = net.all_width[args.weight_index - 1]
+    net.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
     net.load(args.trained_model)
     # net.load_state_dict(torch.load(args.trained_model))
 
