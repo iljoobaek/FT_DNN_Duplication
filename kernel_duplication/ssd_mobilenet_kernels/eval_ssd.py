@@ -165,7 +165,7 @@ def cal_importance(model):
 
 
         # forward pass
-        confidence, locations = model(images)
+        confidence, locations, _ = model(images)
         regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)
         loss = regression_loss + classification_loss
         loss.backward()
