@@ -165,8 +165,10 @@ class SSD(nn.Module):
         x = x.reshape(origin_shape)
         
         x_dup = x.clone()
+        
         x_dup[:, self.all_duplication_indices[k][:int(n * self.percentage)], :, :] = \
-            x_origin[:, self.all_duplication_indices[k][:int(n * self.percentage)], :, :]
+            (x[:, self.all_duplication_indices[k][:int(n * self.percentage)], :, :] + \
+            x_origin[:, self.all_duplication_indices[k][:int(n * self.percentage)], :, :]) / 2
         # x = x[:, reverse_index, :, :]
         
         return x_dup
