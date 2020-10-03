@@ -376,15 +376,15 @@ class SSD(nn.Module):
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
-                x_original = layer(x)
+                x_original = layer(x) # K+FM
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
-                    # K+FM
-                    x_original = self.weights_copy[start_layer_index + i](x)
+                    x_original = self.weights_copy[start_layer_index + i](x) # K+FM
                     if self.error:
                         start = time.time()
                         if self.duplicated:
                             # print(start_layer_index + i)
-                            self.weights_error_average(start_layer_index + i)
+                            # self.weights_error_average(start_layer_index + i)
+                            self._kernel_recover_and_err(start_layer_index + i) # K+FM
                         else:
                             # print(start_layer_index + i)
                             self._kernel_recover_and_err(start_layer_index + i)

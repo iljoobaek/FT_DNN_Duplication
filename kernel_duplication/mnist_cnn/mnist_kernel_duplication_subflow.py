@@ -37,6 +37,10 @@ class SimpleCNN(nn.Module):
         self.error_spread = error_spread
         
         self.importance = False
+        self.entropy = False
+        self.layerwise_entropy_p = []
+        self.softmax = nn.Softmax(dim = 0)
+        self.logsoftmax = nn.LogSoftmax(dim = 0)
 
         self.flat_dim = inp_size*inp_size*4
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'relu'))
@@ -90,44 +94,21 @@ class SimpleCNN(nn.Module):
 
         return x
 
-    def error_injection_weights(self, error_rate):
-        # error_rate = self.error
-        length = 0
-        touch1 = {self.weight_index}
-        for k in touch1:
-            # print(type(self.base_net[k]))
-            # print(self.base_net[k])
-            for module in self.base_net[k]:
-                print(module)
-                if isinstance(module, nn.BatchNorm2d):
-                    length = max(module.weight.data.size()[0], length)
-                if isinstance(module, nn.Conv2d):
-                    print(module.weight.data.size())
-                    size = module.weight.data.size()
-                    # if size[1] == 1:
-                    #     length = size[0]
-                    # size1 = m.bias.data.size()
-                    total_dim = torch.zeros(size).flatten().shape[0]
-                    # total_dim1 = torch.zeros(size1).flatten().shape[0]
-            # print(total_dim)
-                    random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
-                    # random_index1 = torch.randperm(total_dim1)[:int(total_dim1 * error_rate)]
-                    x = torch.zeros(total_dim)
-                    # x1 = torch.zeros(total_dim1)
-                    x_zero = torch.zeros(size).to(self.device)
-                    x[random_index] = 1
-                    # x1[random_index1] = 1
-                    x = x.reshape(size).to(self.device)
-                    # x1 = x1.reshape(size1)
-                    # m = torch.distributions.normal.Normal(torch.tensor([0.0]).to(self.device), torch.tensor([0.5]).to(self.device))
-            # print(m.sample(size).size())
-                    with torch.no_grad():
-                        # module.weight.data = torch.where(x == 0, module.weight.data, m.sample(size).squeeze())
-                        module.weight.data = torch.where(x == 0, module.weight.data, x_zero)
-                        # m.bias.data = torch.where(x1 == 0, m.bias.data, m.sample(size1).squeeze())
-                        # self.vgg[2].weight.data = torch.where(x == 1, self.vgg[2].weight.data, torch.zeros(size))
-            # print(self.vgg[2].weight.data[0][0])
-        return length
+    def error_injection_weights(self, module, x, error_rate):
+        if isinstance(module, nn.Conv2d):
+            # print(module.weight.data.size())
+            size = module.weight.data.size()
+            total_dim = torch.zeros(size).flatten().shape[0]
+            random_index = torch.randperm(total_dim)[:int(total_dim * error_rate)]
+            x1 = torch.zeros(total_dim)
+            x_zero = torch.zeros(size).cuda()
+            x[random_index] = 1
+            x1 = x1.reshape(size).cuda()
+            with torch.no_grad():
+                module.weight.data = torch.where(x1 == 0, module.weight.data, x_zero)
+            # print(module.weight.data.size())
+        x = module(x)
+        return x
 
     def duplication(self, x_original, x_error, duplicate_index):
         x_duplicate = x_error.clone()
@@ -147,18 +128,25 @@ class SimpleCNN(nn.Module):
             x.retain_grad()  # is there any more elegant way?
             self.output.append(x)
 
+        # x = self.error_injection_weights(self.conv1, x, self.error)
         x = self.conv1(x)
+        # print(x.size())
         x = self.nonlinear(x)
+        # exit()
         
         if self.importance:
             x.retain_grad()
             self.output.append(x)
-
+        if self.entropy:
+            feature = x.clone().detach()
+            xtemp = torch.flatten(feature.mean(0), start_dim=1)
+            entropy = -self.softmax(xtemp.permute(1, 0)) * self.logsoftmax(xtemp.permute(1, 0))
+            self.layerwise_entropy_p.append(entropy.sum(0))
 
         '''
             Simulate error injection
         '''
-
+        
         if self.error:
             if self.attention_mode:
                 x_copy = x.clone()
@@ -186,7 +174,7 @@ class SimpleCNN(nn.Module):
                 x = nn.Tanh()(x)
                 x = self.fc4(x)
                 x = x.permute(0, 3, 1, 2)
-
+        
         x = self.pool1(x)
         x = self.conv2(x)
         x = self.nonlinear(x)
@@ -256,6 +244,32 @@ def cal_importance(model, train_data):
 
         break
     model.importance = False
+    return importance_list
+
+
+def cal_entropy(model, train_data):
+    """
+    s = o^2 * H
+
+    :param model:
+    :param train_data:
+    :return:
+    """
+    importance_list = []
+    model.entropy = True
+    for batch_idx, (data, target) in enumerate(train_data):
+        data, target = data.to(device), target.to(device)
+
+        # forward pass
+        output = model(data)
+        # loss = F.cross_entropy(output, target)
+        # loss.backward()
+
+        for i, out in enumerate(model.layerwise_entropy_p):
+            importance_list.append(out)
+
+        break
+    model.entropy = False
     return importance_list
 
 
@@ -448,6 +462,21 @@ def evaluate(error_rate, device, test_loader):
     print("final acc with attention: ", test_acc)
     with open("results.txt", 'a') as f:
         f.write(str(args.error_rate)+"|spread|d2nn|"+str(test_acc*100)+"\n")
+        
+    print("Evaluating model with entropy...")
+    index = torch.arange(32).type(torch.float).to(device)
+    importance = cal_entropy(model, test_loader)
+    tmp = importance[0]
+    final = torch.stack((tmp, index), dim=0)
+    final = final.sort(dim=1, descending=False)
+    model.duplicate_index = final.indices[0]
+    print(model.duplicate_index)
+    model.evaluate_origin = False
+    model.attention_mode = True
+    test_loss, test_acc = test(model, device, test_loader)
+    print("final acc with attention: ", test_acc)
+    with open("results.txt", 'a') as f:
+        f.write(str(args.error_rate)+"|spread|entropy|"+str(test_acc*100)+"\n")
 
 
 

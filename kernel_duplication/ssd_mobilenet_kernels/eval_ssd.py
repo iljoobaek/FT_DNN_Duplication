@@ -20,6 +20,7 @@ import logging
 import sys
 import copy
 from vision.ssd.mobilenet_v2_ssd_lite import create_mobilenetv2_ssd_lite, create_mobilenetv2_ssd_lite_predictor
+import torch.backends.cudnn as cudnn
 
 
 parser = argparse.ArgumentParser(description="SSD Evaluation on VOC Dataset.")
@@ -48,6 +49,7 @@ parser.add_argument('--percent_duplication', type=float, default=0, metavar='M',
 parser.add_argument('--weight_index', default=1, type=int,
                     help='which layers to duplicate')
 parser.add_argument('--ft_type', default='none', type=str, help='Type of kernel duplication')
+parser.add_argument('--seed', default=1, type=int, help='random seed')
 args = parser.parse_args()
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() and args.use_cuda else "cpu")
 
@@ -225,6 +227,13 @@ if __name__ == '__main__':
     eval_path.mkdir(exist_ok=True)
     timer = Timer()
     class_names = [name.strip() for name in open(args.label_file).readlines()]
+    
+    #random seed 
+    np.random.seed(args.seed)
+    cudnn.deterministic = True
+    torch.manual_seed(args.seed)
+    cudnn.enabled = True
+    torch.cuda.manual_seed(args.seed)
 
     if args.dataset_type == "voc":
         dataset = VOCDataset(args.dataset, is_test=True)
@@ -384,7 +393,7 @@ if __name__ == '__main__':
 
         # net.attention_mode = True
     # net.error_injection_weights_all(args.weight_error)
-    net.error_injection_weights(args.weight_error)
+    # net.error_injection_weights(args.weight_error)
     # net.eval()
     # for ii, mod in enumerate(net.weights_copy[net.weight_index]):
     #     if isinstance(mod, nn.BatchNorm2d) or isinstance(mod, nn.Conv2d):

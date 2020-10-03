@@ -1,5 +1,5 @@
 #!/bin/bash
-for SEED in $(seq 1 1 1)
+for SEED in $(seq 1 1 3)
 do
     python3 mnist_kernel_duplication_subflow.py --evaluate True --error_rate 0.1 --seed ${SEED}
     python3 mnist_kernel_duplication_subflow.py --evaluate True --error_rate 0.3 --seed ${SEED}
