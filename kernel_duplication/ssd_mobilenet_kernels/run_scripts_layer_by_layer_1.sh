@@ -1,3 +1,5 @@
+CUDA_VISIBLE_DEVICES=1
+
 NUM_DUP=0.5
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
@@ -8,7 +10,7 @@ WERR=0
 # for WERR in $(seq 0.02 0.01 0.1)
 # do
 # echo "error=${WERR}" >> result.txt
-for SEED in $(seq 1 1 3)
+for SEED in $(seq 3 1 3)
 do
 echo "seed=${SEED}" >> result.txt
 for IDX in $(seq 1 1 12)

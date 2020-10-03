@@ -176,7 +176,7 @@ def cal_importance(model):
             hessian_approximate = out.grad ** 2  # grad^2 -> hessian
             importance = hessian_approximate * (out.detach().clone() ** 2)
             importance_list.append(importance.mean(dim=0))
-            #print(importance_list[-1].size())
+            # print(importance_list[-1].size())
 
         break
 
@@ -305,42 +305,43 @@ if __name__ == '__main__':
 
         if args.ft_type == "attention":
             print("attention:")
-            for k in {1}:
-                index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
+            for k in {args.weight_index}:
+                index = torch.arange(width).type(torch.float).to(DEVICE)
                 # tmp = torch.sum(layer_mp[k], axis=0)
-                tmp = layer_mp[k].sum(3).sum(2).sum(1)
+                tmp = layer_mp[1].sum(3).sum(2).sum(1)
                 #print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
                 final = final.sort(dim=1, descending=True)
-                if k == 1:
-                    net.duplicate_index1 = final.indices[0]
-                    # net.duplicate_index1 = torch.tensor([10,30,19,0,55,59,47,29,62,13,20,35,53,37,28,17,26,33,50,5,57,40,32,34,41,18,12,58,45,52,63,56,27,44,16,6,4,43,60,49,46,48,8,2,1,11,21,36,42,24,31,25,51,3,38,54,15,61,7,9,22,39,23,14])
-                    # print(net.duplicate_index1)
-                elif k == 2:
-                    net.duplicate_index2 = final.indices[0]
-                if k == 3:
-                    net.duplicate_index3 = final.indices[0]
+                net.all_duplication_indices[k] = final.indices[0]
+                # if k == 1:
+                #     net.duplicate_index1 = final.indices[0]
+                #     # net.duplicate_index1 = torch.tensor([10,30,19,0,55,59,47,29,62,13,20,35,53,37,28,17,26,33,50,5,57,40,32,34,41,18,12,58,45,52,63,56,27,44,16,6,4,43,60,49,46,48,8,2,1,11,21,36,42,24,31,25,51,3,38,54,15,61,7,9,22,39,23,14])
+                #     # print(net.duplicate_index1)
+                # elif k == 2:
+                #     net.duplicate_index2 = final.indices[0]
+                # if k == 3:
+                #     net.duplicate_index3 = final.indices[0]
         elif args.ft_type == "importance":
             print("importance:")
+            net_imp = create_mobilenetv1_ssd(len(class_names))
+            weights_imp = copy.deepcopy(net.state_dict())
+            net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
+            net_imp.load_state_dict(weights_imp)
+            net_imp.is_importance = True
+            net_imp.weight_index = args.weight_index
+            importance = cal_importance(net_imp)
+            net_imp.is_importance = False
             # for k in {1}:
-            for k in net.all_layer_indices:
+            # for k in net.all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
-                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
-                net_imp = create_mobilenetv1_ssd(len(class_names))
-                weights_imp = copy.deepcopy(net.state_dict())
-                # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
-                net_imp.load_state_dict(weights_imp)
-                net_imp.is_importance = True
-                # net_imp.weight_index = args.weight_index
-                importance = cal_importance(net_imp)
-                net_imp.is_importance = False
+            index = torch.arange(width).type(torch.float).to(DEVICE)
                 # print(len(importance[0]))
-                tmp = importance[k - 1].sum(2).sum(1)
+            tmp = importance[0].sum(2).sum(1)
                 # tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)
-                final = torch.stack((tmp, index), axis=0)
-                final = final.sort(dim=1, descending=True)
-                net.all_duplication_indices[k] = final.indices[0]
+            final = torch.stack((tmp, index), axis=0)
+            final = final.sort(dim=1, descending=True)
+            net.all_duplication_indices[args.weight_index] = final.indices[0]
                 # if k == 1:
                 #     net.duplicate_index1 = final.indices[0]
                 #     print(net.duplicate_index1)
