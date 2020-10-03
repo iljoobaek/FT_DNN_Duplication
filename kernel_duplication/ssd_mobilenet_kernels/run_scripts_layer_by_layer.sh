@@ -2,7 +2,7 @@ NUM_DUP=0.5
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
 
-
+WERR=0
 # for WERR in $(seq 0.02 0.01 0.1)
 # do
 # echo "error=${WERR}" >> result.txt
