@@ -1,8 +1,8 @@
 NUM_DUP=0.5
 IDX=1
 MODEL=models/attention3/ssd300_COCO_9.pth
-# DATA=/home/rtml/data/VOCdevkit/VOC2007
-DATA=/home/droid/Documents/data/VOCdevkit/VOC2007
+DATA=/home/rtml/data/VOCdevkit/VOC2007
+# DATA=/home/droid/Documents/data/VOCdevkit/VOC2007
 
 WERR=0
 # for WERR in $(seq 0.02 0.01 0.1)
