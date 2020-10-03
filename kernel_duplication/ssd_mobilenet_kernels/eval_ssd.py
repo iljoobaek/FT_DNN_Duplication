@@ -427,7 +427,8 @@ if __name__ == '__main__':
         # print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
         timer.start("Predict")
         # use timer
-        boxes, labels, probs = predictor.predict(image)
+        # boxes, labels, probs = predictor.predict(image)
+        boxes, labels, probs, t = predictor.predict(image)
         # print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
         indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
         # print(indexes.is_cuda, labels.is_cuda, probs.is_cuda, boxes.is_cuda)
