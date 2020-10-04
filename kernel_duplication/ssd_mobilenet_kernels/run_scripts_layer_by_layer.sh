@@ -18,19 +18,19 @@ ATMODEL=models/attention3/${IDX}_ssd300_COCO_9.pth
 for ERR in $(seq 0.1 0.4 0.5)
 do
 echo "err=${ERR}" >> result.txt
-python eval_ssd.py --error_rate ${ERR} \
-                   --percent_duplication 0 \
-                   --run_original False \
-                   --duplicated False \
-                   --ft_type none \
-                   --dataset_type voc \
-                   --dataset ${DATA} \
-                   --net mb1-ssd \
-                   --trained_model ${ATMODEL} \
-                   --label_file models/voc-model-labels.txt \
-                   --weight_index ${IDX} \
-                   --weight_error ${WERR} \
-                   --seed ${SEED}
+# python eval_ssd.py --error_rate ${ERR} \
+#                    --percent_duplication 0 \
+#                    --run_original False \
+#                    --duplicated False \
+#                    --ft_type none \
+#                    --dataset_type voc \
+#                    --dataset ${DATA} \
+#                    --net mb1-ssd \
+#                    --trained_model ${ATMODEL} \
+#                    --label_file models/voc-model-labels.txt \
+#                    --weight_index ${IDX} \
+#                    --weight_error ${WERR} \
+#                    --seed ${SEED}
 
 python eval_ssd.py --error_rate ${ERR} \
                    --percent_duplication ${NUM_DUP} \
