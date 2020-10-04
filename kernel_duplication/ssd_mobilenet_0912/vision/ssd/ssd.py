@@ -255,9 +255,9 @@ class SSD(nn.Module):
                     with torch.no_grad():
                         # err_to_kernel = torch.where(x == 0, module.weight.data, x_zero)
                         err_to_kernel = torch.where(x == 0, self.weights_copy[k][i].weight.data, x_zero)
-                        err_to_origin = torch.where(x1 == 0, self.weights_copy[k][i].weight.data, x_zero)
-                        # avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
-                        avg_kernel = (err_to_origin + err_to_kernel) / 2
+                        # err_to_origin = torch.where(x1 == 0, self.weights_copy[k][i].weight.data, x_zero)
+                        avg_kernel = (self.weights_copy[k][i].weight.data + err_to_kernel) / 2
+                        # avg_kernel = (err_to_origin + err_to_kernel) / 2
                         if flag:
                             # print(err_to_kernel.size(), self.all_duplication_indices[k][:int(self.all_width[k-1] * self.percentage_list[k-1])].size())
                             # err_to_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]] = avg_kernel[self.all_duplication_indices[k][int(self.all_width[k-1] * 0.5):]]
@@ -265,7 +265,7 @@ class SSD(nn.Module):
                             err_to_kernel[self.all_duplication_indices[k][:int(self.all_width[k] * self.percentage_list[k-1])]] = avg_kernel[self.all_duplication_indices[k][:int(self.all_width[k] * self.percentage_list[k-1])]]
                             module.weight.data = err_to_kernel
                         else:
-                            module.weight.data = err_to_kernel
+                            module.weight.data = avg_kernel
                     if not flag:
                         flag = True
         elif isinstance(self.base_net[k], nn.Conv2d):
