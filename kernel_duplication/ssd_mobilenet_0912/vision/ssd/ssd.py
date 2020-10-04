@@ -265,7 +265,7 @@ class SSD(nn.Module):
                             err_to_kernel[self.all_duplication_indices[k][:int(self.all_width[k] * self.percentage_list[k-1])]] = avg_kernel[self.all_duplication_indices[k][:int(self.all_width[k] * self.percentage_list[k-1])]]
                             module.weight.data = err_to_kernel
                         else:
-                            module.weight.data = avg_kernel
+                            module.weight.data = err_to_kernel
                     if not flag:
                         flag = True
         elif isinstance(self.base_net[k], nn.Conv2d):
@@ -378,15 +378,15 @@ class SSD(nn.Module):
             #     x = layer(x)
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
-                x_original = layer(x) # K+FM
+                # x_original = layer(x) # K+FM
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
-                    x_original = self.weights_copy[start_layer_index + i](x) # K+FM
+                    # x_original = self.weights_copy[start_layer_index + i](x) # K+FM
                     if self.error:
                         start = time.time()
                         if self.duplicated:
                             # print(start_layer_index + i)
-                            # self.weights_error_average(start_layer_index + i)
-                            self._kernel_recover_and_err(start_layer_index + i) # K+FM
+                            self.weights_error_average(start_layer_index + i)
+                            # self._kernel_recover_and_err(start_layer_index + i) # K+FM
                         else:
                             # print(start_layer_index + i)
                             self._kernel_recover_and_err(start_layer_index + i)
@@ -398,8 +398,8 @@ class SSD(nn.Module):
                     # print((layer.weight.data - self.base_net[start_layer_index: end_layer_index][i].weight.data).sum())
                     if self.error:
                         start = time.time()
-                        x = self.error_injection_feature(x, self.error, start_layer_index + i, x_original)
-                        # x = self.error_injection(x, self.error, None, is_origin=True)
+                        # x = self.error_injection_feature(x, self.error, start_layer_index + i, x_original)
+                        x = self.error_injection(x, self.error, None, is_origin=True)
                         total_time[0] += time.time() - start
                     # elif self.attention_mode:
                     #     x = self.conv1_attention(x)
