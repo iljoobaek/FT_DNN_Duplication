@@ -189,7 +189,8 @@ class SSD(nn.Module):
     
     def duplication(self, x_original, x_error, duplicate_index):
         x_duplicate = x_error.clone()
-        x_duplicate[:, duplicate_index[:self.num_duplication], :, :] = x_original[:, duplicate_index[:self.num_duplication], :, :]
+        n = x_duplicate.shape[1]
+        x_duplicate[:, duplicate_index[:int(n * self.percentage)], :, :] = x_original[:, duplicate_index[:int(n * self.percentage)], :, :]
         return x_duplicate
 
     # def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
