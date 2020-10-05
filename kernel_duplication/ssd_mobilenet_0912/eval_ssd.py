@@ -231,13 +231,13 @@ def cal_entropy(model, config):
     return importance_list
 
 
-def cal_entropy_each_layer(model):
+def cal_entropy_each_layer(model, config):
     model.to(DEVICE)
     for i in model.all_layer_indices:
         model.weights_copy[i] = copy.deepcopy(model.base_net[i])
         model.weights_copy[i].eval()
     importance_list = []
-    config = mobilenetv1_ssd_config
+    # config = mobilenetv1_ssd_config
     train_transform = TrainAugmentation(config.image_size, config.image_mean, config.image_std)
     target_transform = MatchPrior(config.priors, config.center_variance,
                                   config.size_variance, 0.5)
@@ -523,18 +523,33 @@ if __name__ == '__main__':
             exit()
         elif args.ft_type == "entropy_p":
             print("entropy each layer:")
-            net_imp = create_mobilenetv1_ssd(len(class_names))
+            if args.net == 'vgg16-ssd':
+                net_imp = create_vgg_ssd(len(class_names))
+                config = vgg_ssd_config
+                net_imp.all_layer_indices = [2, 5, 7, 10, 12, 14, 17, 19, 21]
+                net_imp.all_width = {0: 64, 2: 64, 5: 128, 7: 128, 10: 256, 12: 256, 14: 256, 
+                                    17: 512, 19: 512, 21: 512, 24: 512, 26: 512, 28: 512, 
+                                    31: 1024, 33: 1024}
+            elif args.net == 'mb1-ssd':
+                net_imp = create_mobilenetv1_ssd(len(class_names))
+                config = mobilenetv1_ssd_config
+                net_imp.all_layer_indices = range(1, 13)
+                net_imp.all_width = {1: 64, 2: 128, 3: 128, 4: 256, 5: 256, 6: 512, 7: 512, 8: 512, 
+                                9: 512, 10: 512, 11: 512, 12: 1024}
+            # net_imp = create_mobilenetv1_ssd(len(class_names))
             weights_imp = copy.deepcopy(net.state_dict())
             # net_imp.conv1_attention = nn.Conv2d(width, width, 3, 1, 1, groups=width, bias=False)
             net_imp.load_state_dict(weights_imp)
             net_imp.entropy_flag_p = True
-            importance = cal_entropy_each_layer(net_imp)
+            importance = cal_entropy_each_layer(net_imp, config)
+            cnt = 0
             for k in net.all_layer_indices:
                 # index = torch.arange(num_layer_mp[k]).type(torch.float).to(DEVICE)
-                index = torch.arange(net.all_width[k - 1]).type(torch.float).to(DEVICE)
+                index = torch.arange(net.all_width[k]).type(torch.float).to(DEVICE)
 
                 # print(len(importance[0]))
-                tmp = importance[k - 1]
+                tmp = importance[cnt]
+                cnt += 1
                 # tmp = importance[layer_id[k]].sum(2).sum(1)
                 # print(layer_mp[k].shape)
                 final = torch.stack((tmp, index), axis=0)
