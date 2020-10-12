@@ -20,23 +20,23 @@ for WERR in $(seq 0.01 0.01 0.01)
 do
 # echo "error=${WERR}" >> ${SAVEFILE}
 # echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=No dup, Seed=${SEED}" >> ${SAVEFILE}
-# for ERR in $(seq 0.05 0.01 0.05)
-# do
-# python eval_ssd.py --error_rate ${ERR} \
-#                    --percent_duplication ${NUM_DUP} \
-#                    --run_original False \
-#                    --duplicated False \
-#                    --ft_type None \
-#                    --dataset_type voc \
-#                    --dataset ${DATAPATH} \
-#                    --net mb1-ssd \
-#                    --trained_model ${ATMODEL} \
-#                    --label_file models/voc-model-labels.txt \
-#                    --weight_index ${IDX} \
-#                    --weight_error ${WERR} \
-#                    --result_save_file ${SAVEFILE} \
-#                    --seed ${SEED}
-# done
+for ERR in $(seq 0.05 0.01 0.05)
+do
+python eval_ssd.py --error_rate ${ERR} \
+                   --percent_duplication ${NUM_DUP} \
+                   --run_original False \
+                   --duplicated False \
+                   --ft_type None \
+                   --dataset_type voc \
+                   --dataset ${DATAPATH} \
+                   --net mb1-ssd \
+                   --trained_model ${ATMODEL} \
+                   --label_file models/voc-model-labels.txt \
+                   --weight_index ${IDX} \
+                   --weight_error ${WERR} \
+                   --result_save_file ${SAVEFILE} \
+                   --seed ${SEED}
+done
 
 # echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Random" >> ${SAVEFILE}
 # for ERR in $(seq 0.01 0.01 0.1)
@@ -59,6 +59,27 @@ do
 # done
 
 echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=D2NN" >> ${SAVEFILE}
+
+for ERR in $(seq 0.05 0.01 0.05)
+do
+python eval_ssd.py --error_rate ${ERR} \
+                   --percent_duplication ${NUM_DUP} \
+                   --run_original False \
+                   --duplicated True \
+                   --ft_type d2nn \
+                   --dataset_type voc \
+                   --dataset ${DATAPATH} \
+                   --net mb1-ssd \
+                   --trained_model ${ATMODEL} \
+                   --label_file models/voc-model-labels.txt \
+                   --weight_index ${IDX} \
+                   --weight_error ${WERR} \
+                   --result_save_file ${SAVEFILE} \
+                   --seed ${SEED} \
+                   --recover_type KR
+
+done
+
 for ERR in $(seq 0.05 0.01 0.05)
 do
 python eval_ssd.py --error_rate ${ERR} \

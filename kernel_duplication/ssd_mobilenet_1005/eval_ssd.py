@@ -482,7 +482,11 @@ if __name__ == '__main__':
     for i in range(len(dataset)):
         if i % 100 == 0:
             print("process image", i, "of", len(dataset))
+            
             # if i == 100:
+                # print(time_consumption)
+                # time_consumption = np.array(time_consumption[1:])
+                # print("mean: {:.6f} std: {:.6f}".format(time_consumption.mean(), time_consumption.std()))
                 # print(time.time() - begin)
                 # exit()
         timer.start("Load Image")
@@ -541,7 +545,7 @@ if __name__ == '__main__':
 
     print(f"\nAverage Precision Across All Classes:{sum(aps)/len(aps)}")
     # with open("result.txt", 'a') as f:
-    time_consumption = np.array(time_consumption)
+    time_consumption = np.array(time_consumption[1:])
     print("mean: {:.6f} std: {:.6f}".format(time_consumption.mean(), time_consumption.std()))
     with open(args.result_save_file, 'a') as f:
         f.write(str(args.error_rate) + "|" + str(args.duplicated) + "|" + args.ft_type + "|" + str(np.mean(aps)) + "\n")

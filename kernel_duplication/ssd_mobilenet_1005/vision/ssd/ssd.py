@@ -280,6 +280,7 @@ class SSD(nn.Module):
         start_layer_index = 0
         header_index = 0
         # total_time = [0, 0]
+        cnt = 0
         total_time = 0
         terminal_index = 0
         if isinstance(self.source_layer_indexes[0], tuple):
@@ -301,15 +302,22 @@ class SSD(nn.Module):
                 path = None
             for i, layer in enumerate(self.base_net[start_layer_index: end_layer_index]):
                 # if not self.run_original and start_layer_index + i == self.weight_index:
-                if self.recover_type == "FMR":
+                if self.recover_type == "FMR" and (0 == start_layer_index + i or start_layer_index + i > terminal_index or start_layer_index + i not in self.all_layer_indices):
+                    # print(i, total_time, "start")
                     start = time.time()
                     x_original = layer(x) # K+FM
                     total_time += time.time() - start
+                    cnt += 1
+                    # print(i, total_time)
+                    # print("FMR")
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
                     if self.recover_type == "FMR":
                         start = time.time()
                         x_original = self.weights_copy[start_layer_index + i](x) # K+FM
                         total_time += time.time() - start
+                        cnt += 1
+                        # print("FMR")
+                        # print(i, total_time)
                     if self.error:
                         # start = time.time()
                         if self.duplicated:
@@ -317,6 +325,9 @@ class SSD(nn.Module):
                             if self.recover_type == "KR":
                                 t1 = self.weights_error_average(start_layer_index + i)
                                 total_time += t1
+                                cnt += 1
+                                # print("KR", t1)
+                                # print(i, total_time)
                             elif self.recover_type == "FMR":
                                 self._kernel_recover_and_err(start_layer_index + i) # K+FM
                         else:
@@ -328,14 +339,22 @@ class SSD(nn.Module):
                 start = time.time()
                 x = layer(x) # original kernel
                 total_time += time.time() - start
+                cnt += 1
+                # print(i, total_time)
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
                     # print((layer.weight.data - self.base_net[start_layer_index: end_layer_index][i].weight.data).sum())
                     if self.error:
                         # start = time.time()
-                        if self.recover_type == "FMR":
-                            x, t2 = self.error_injection_feature(x, self.error, start_layer_index + i, x_original)
-                            total_time += t2
-                        elif self.recover_type == "KR":
+                        if self.duplicated:
+                            if self.recover_type == "FMR":
+                                x, t2 = self.error_injection_feature(x, self.error, start_layer_index + i, x_original)
+                                total_time += t2
+                                cnt += 1
+                                # print("FMR")
+                                # print(i, total_time)
+                            elif self.recover_type == "KR":
+                                x = self.error_injection(x, self.error, None, is_origin=True)
+                        else:
                             x = self.error_injection(x, self.error, None, is_origin=True)
                         # total_time[0] += time.time() - start
                     elif self.is_importance:
@@ -375,6 +394,8 @@ class SSD(nn.Module):
             confidences.append(confidence)
             locations.append(location)
             total_time += time.time() - start
+            cnt += 1
+            # print(total_time)
 
         start = time.time()
         for layer in self.base_net[end_layer_index:]:
@@ -390,6 +411,8 @@ class SSD(nn.Module):
         confidences = torch.cat(confidences, 1)
         locations = torch.cat(locations, 1)
         total_time += time.time() - start
+        cnt += 1
+        # print(total_time)
         # print(total_time)
         
         if self.is_test:
@@ -400,6 +423,10 @@ class SSD(nn.Module):
             )
             boxes = box_utils.center_form_to_corner_form(boxes)
             total_time += time.time() - start
+            cnt += 1
+            # print(cnt)
+            # print(total_time)
+            # exit()
             return confidences, boxes, total_time
         else:
             return confidences, locations, total_time
