@@ -279,9 +279,9 @@ class SSD(nn.Module):
         locations = []
         start_layer_index = 0
         header_index = 0
-        # total_time = [0, 0]
+        total_time = [0, 0]
         cnt = 0
-        total_time = 0
+        # total_time = 0
         terminal_index = 0
         if isinstance(self.source_layer_indexes[0], tuple):
             terminal_index = self.source_layer_indexes[0][0]
@@ -306,7 +306,8 @@ class SSD(nn.Module):
                     # print(i, total_time, "start")
                     start = time.time()
                     x_original = layer(x) # K+FM
-                    total_time += time.time() - start
+                    # total_time += time.time() - start
+                    total_time[1] += time.time() - start
                     cnt += 1
                     # print(i, total_time)
                     # print("FMR")
@@ -314,7 +315,8 @@ class SSD(nn.Module):
                     if self.recover_type == "FMR":
                         start = time.time()
                         x_original = self.weights_copy[start_layer_index + i](x) # K+FM
-                        total_time += time.time() - start
+                        # total_time += time.time() - start
+                        total_time[1] += time.time() - start
                         cnt += 1
                         # print("FMR")
                         # print(i, total_time)
@@ -324,7 +326,8 @@ class SSD(nn.Module):
                             # print(start_layer_index + i)
                             if self.recover_type == "KR":
                                 t1 = self.weights_error_average(start_layer_index + i)
-                                total_time += t1
+                                # total_time += t1
+                                total_time[1] += t1
                                 cnt += 1
                                 # print("KR", t1)
                                 # print(i, total_time)
@@ -338,7 +341,8 @@ class SSD(nn.Module):
 
                 start = time.time()
                 x = layer(x) # original kernel
-                total_time += time.time() - start
+                # total_time += time.time() - start
+                total_time[0] += time.time() - start
                 cnt += 1
                 # print(i, total_time)
                 if not self.run_original and 0 < start_layer_index + i <= terminal_index and start_layer_index + i in self.all_layer_indices:
@@ -348,7 +352,8 @@ class SSD(nn.Module):
                         if self.duplicated:
                             if self.recover_type == "FMR":
                                 x, t2 = self.error_injection_feature(x, self.error, start_layer_index + i, x_original)
-                                total_time += t2
+                                # total_time += t2
+                                total_time[1] += t2
                                 cnt += 1
                                 # print("FMR")
                                 # print(i, total_time)
@@ -393,7 +398,8 @@ class SSD(nn.Module):
             header_index += 1
             confidences.append(confidence)
             locations.append(location)
-            total_time += time.time() - start
+            # total_time += time.time() - start
+            total_time[0] += time.time() - start
             cnt += 1
             # print(total_time)
 
@@ -410,7 +416,8 @@ class SSD(nn.Module):
 
         confidences = torch.cat(confidences, 1)
         locations = torch.cat(locations, 1)
-        total_time += time.time() - start
+        # total_time += time.time() - start
+        total_time[0] += time.time() - start
         cnt += 1
         # print(total_time)
         # print(total_time)
@@ -422,7 +429,8 @@ class SSD(nn.Module):
                 locations.to(self.device), self.priors, self.config.center_variance, self.config.size_variance
             )
             boxes = box_utils.center_form_to_corner_form(boxes)
-            total_time += time.time() - start
+            # total_time += time.time() - start
+            total_time[0] += time.time() - start
             cnt += 1
             # print(cnt)
             # print(total_time)

@@ -484,18 +484,21 @@ if __name__ == '__main__':
             print("process image", i, "of", len(dataset))
             
             # if i == 100:
-                # print(time_consumption)
-                # time_consumption = np.array(time_consumption[1:])
-                # print("mean: {:.6f} std: {:.6f}".format(time_consumption.mean(), time_consumption.std()))
-                # print(time.time() - begin)
-                # exit()
+            #     # print(time_consumption)
+            #     time_consumption = np.array(time_consumption[1:])
+            #     print(time_consumption)
+            #     print("mean: {:.6f} std: {:.6f}".format(time_consumption.mean(), time_consumption.std()))
+            #     # print(time.time() - begin)
+            #     exit()
         timer.start("Load Image")
         image = dataset.get_image(i)
         # print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
         timer.start("Predict")
         # use timer
         boxes, labels, probs, total_time = predictor.predict(image)
-        time_consumption.append(total_time)
+        # time_consumption.append(total_time)
+        # print(total_time)
+        time_consumption.append(sum(total_time))
         # print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
         indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
         # indexes = indexes.cuda()
