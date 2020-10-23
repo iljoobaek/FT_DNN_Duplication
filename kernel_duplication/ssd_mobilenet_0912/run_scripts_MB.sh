@@ -13,7 +13,7 @@ echo "Kernel Only" >> ${SAVEFILE}
 #do
 for SEED in $(seq 1 1 3)
 do
-for WERR in $(seq 0.1 0.01 0.1)
+for WERR in $(seq 0.01 0.01 0.01)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do
