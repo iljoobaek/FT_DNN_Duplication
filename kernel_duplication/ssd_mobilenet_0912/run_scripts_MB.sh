@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=0
-NUM_DUP=0.5
+NUM_DUP=0.1
 IDX=1
 # MODEL=models/attention3/ssd300_COCO_9.pth
 MODEL=models/vgg16-ssd-mp-0_7726.pth
@@ -37,25 +37,25 @@ do
 #                    --seed ${SEED}
 # done
 
-# echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Random" >> ${SAVEFILE}
-# for ERR in $(seq 0.01 0.01 0.1)
-# do
-# python eval_ssd.py --error_rate ${ERR} \
-#                    --percent_duplication ${NUM_DUP} \
-#                    --run_original False \
-#                    --duplicated True \
-#                    --ft_type random \
-#                    --dataset_type voc \
-#                    --dataset ${DATAPATH} \
-#                    --net mb1-ssd \
-#                    --trained_model ${ATMODEL} \
-#                    --label_file models/voc-model-labels.txt \
-#                    --weight_index ${IDX} \
-#                    --weight_error ${WERR} \
-#                    --result_save_file ${SAVEFILE} \
-#                    --seed ${SEED}
+echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Random" >> ${SAVEFILE}
+for ERR in $(seq 0.01 0.01 0.1)
+do
+python eval_ssd.py --error_rate ${ERR} \
+                   --percent_duplication ${NUM_DUP} \
+                   --run_original False \
+                   --duplicated True \
+                   --ft_type random \
+                   --dataset_type voc \
+                   --dataset ${DATAPATH} \
+                   --net mb1-ssd \
+                   --trained_model ${ATMODEL} \
+                   --label_file models/voc-model-labels.txt \
+                   --weight_index ${IDX} \
+                   --weight_error ${WERR} \
+                   --result_save_file ${SAVEFILE} \
+                   --seed ${SEED}
 
-# done
+done
 
 # echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=D2NN" >> ${SAVEFILE}
 # for ERR in $(seq 0.01 0.01 0.1)
