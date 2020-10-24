@@ -81,7 +81,7 @@ do
 
 # done
 
-for ERR in $(seq 0.1 0.01 0.1)
+for ERR in $(seq 0.01 0.01 0.1)
 do
 python eval_ssd.py --error_rate ${ERR} \
                    --percent_duplication ${NUM_DUP} \
