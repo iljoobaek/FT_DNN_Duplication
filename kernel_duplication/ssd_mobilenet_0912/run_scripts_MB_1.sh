@@ -59,7 +59,7 @@ do
 # done
 
 echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=D2NN" >> ${SAVEFILE}
-for ERR in $(seq 0.1 0.01 0.1)
+for ERR in $(seq 0.01 0.01 0.01)
 do
 python eval_ssd.py --error_rate ${ERR} \
                    --percent_duplication ${NUM_DUP} \
