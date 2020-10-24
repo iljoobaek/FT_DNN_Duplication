@@ -12,7 +12,7 @@ ATMODEL=models/mobilenet-v1-ssd-mp-0_675.pth
 echo "Kernel Only" >> ${SAVEFILE}
 #for NUM_DUP in $(seq 0.01 0.02 0.09)
 #do
-for SEED in $(seq 1 1 3)
+for SEED in $(seq 1 1 1)
 do
 for WERR in $(seq 0.01 0.01 0.01)
 # WERR=0.02
@@ -58,25 +58,25 @@ do
 
 # done
 
-# echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=D2NN" >> ${SAVEFILE}
-# for ERR in $(seq 0.01 0.01 0.1)
-# do
-# python eval_ssd.py --error_rate ${ERR} \
-#                    --percent_duplication ${NUM_DUP} \
-#                    --run_original False \
-#                    --duplicated True \
-#                    --ft_type d2nn \
-#                    --dataset_type voc \
-#                    --dataset ${DATAPATH} \
-#                    --net mb1-ssd \
-#                    --trained_model ${ATMODEL} \
-#                    --label_file models/voc-model-labels.txt \
-#                    --weight_index ${IDX} \
-#                    --weight_error ${WERR} \
-#                    --result_save_file ${SAVEFILE} \
-#                    --seed ${SEED}
+echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=D2NN" >> ${SAVEFILE}
+for ERR in $(seq 0.1 0.01 0.1)
+do
+python eval_ssd.py --error_rate ${ERR} \
+                   --percent_duplication ${NUM_DUP} \
+                   --run_original False \
+                   --duplicated True \
+                   --ft_type d2nn \
+                   --dataset_type voc \
+                   --dataset ${DATAPATH} \
+                   --net mb1-ssd \
+                   --trained_model ${ATMODEL} \
+                   --label_file models/voc-model-labels.txt \
+                   --weight_index ${IDX} \
+                   --weight_error ${WERR} \
+                   --result_save_file ${SAVEFILE} \
+                   --seed ${SEED}
 
-# done
+done
 
 # echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Importance" >> ${SAVEFILE}
 # for ERR in $(seq 0.01 0.01 0.1)
@@ -97,24 +97,24 @@ do
 #                    --seed ${SEED}
 # done
 
-echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Entropy" >> ${SAVEFILE}
-for ERR in $(seq 0.01 0.01 0.1)
-do
-python eval_ssd.py --error_rate ${ERR} \
-                   --percent_duplication ${NUM_DUP} \
-                   --run_original False \
-                   --duplicated True \
-                   --ft_type entropy_p \
-                   --dataset_type voc \
-                   --dataset ${DATAPATH} \
-                   --net mb1-ssd \
-                   --trained_model ${ATMODEL} \
-                   --label_file models/voc-model-labels.txt \
-                   --weight_index ${IDX} \
-                   --weight_error ${WERR} \
-                   --result_save_file ${SAVEFILE} \
-                   --seed ${SEED}
-done
+# echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Entropy" >> ${SAVEFILE}
+# for ERR in $(seq 0.01 0.01 0.1)
+# do
+# python eval_ssd.py --error_rate ${ERR} \
+#                    --percent_duplication ${NUM_DUP} \
+#                    --run_original False \
+#                    --duplicated True \
+#                    --ft_type entropy_p \
+#                    --dataset_type voc \
+#                    --dataset ${DATAPATH} \
+#                    --net mb1-ssd \
+#                    --trained_model ${ATMODEL} \
+#                    --label_file models/voc-model-labels.txt \
+#                    --weight_index ${IDX} \
+#                    --weight_error ${WERR} \
+#                    --result_save_file ${SAVEFILE} \
+#                    --seed ${SEED}
+# done
 
 done
 done
