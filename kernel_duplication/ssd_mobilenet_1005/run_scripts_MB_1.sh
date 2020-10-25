@@ -12,9 +12,9 @@ ATMODEL=models/mobilenet-v1-ssd-mp-0_675.pth
 echo "Kernel Only" >> ${SAVEFILE}
 #for NUM_DUP in $(seq 0.01 0.02 0.09)
 #do
-for SEED in $(seq 2 1 3)
+for SEED in $(seq 1 1 1)
 do
-for WERR in $(seq 0.01 0.01 0.01)
+for WERR in $(seq 0.01 0.01 0.1)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do
@@ -80,7 +80,7 @@ do
 
 # done
 
-# for ERR in $(seq 0.01 0.01 0.1)
+# for ERR in $(seq 0.1 0.01 0.1)
 # do
 # python eval_ssd.py --error_rate ${ERR} \
 #                    --percent_duplication ${NUM_DUP} \
@@ -101,7 +101,7 @@ do
 # done
 
 echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=Importance" >> ${SAVEFILE}
-for ERR in $(seq 0.01 0.01 0.1)
+for ERR in $(seq 0.01 0.01 0.01)
 do
 python eval_ssd.py --error_rate ${ERR} \
                    --percent_duplication ${NUM_DUP} \
