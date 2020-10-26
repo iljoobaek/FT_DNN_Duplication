@@ -356,8 +356,8 @@ if __name__ == '__main__':
         net.weights_copy[i].eval()
 
     net.percentage = args.percent_duplication
-    # net.percentage_list = [p * args.percent_duplication / 0.1 for p in net.percentage_list]
-    net.percentage_list = [net.percentage] * 12
+    net.percentage_list = [p * args.percent_duplication / 0.1 for p in net.percentage_list]
+    # net.percentage_list = [net.percentage] * 12
     # net.num_duplication = int(args.percent_duplication * width)
     # print(width)
 

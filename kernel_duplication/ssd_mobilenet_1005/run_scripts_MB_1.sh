@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=0
-NUM_DUP=0.05
+NUM_DUP=0.5
 IDX=1
 # MODEL=models/attention3/ssd300_COCO_9.pth
 MODEL=models/vgg16-ssd-mp-0_7726.pth
@@ -12,9 +12,9 @@ ATMODEL=models/mobilenet-v1-ssd-mp-0_675.pth
 echo "Kernel Only" >> ${SAVEFILE}
 #for NUM_DUP in $(seq 0.01 0.02 0.09)
 #do
-for SEED in $(seq 1 1 1)
+for SEED in $(seq 2 1 3)
 do
-for WERR in $(seq 0.01 0.01 0.01)
+for WERR in $(seq 0.01 0.01 0.1)
 # WERR=0.02
 # for NUM_DUP in $(seq 0.1 0.2 0.1)
 do
@@ -60,7 +60,7 @@ do
 
 echo "Error=${WERR}, Dup percentage=${NUM_DUP}, Type=D2NN" >> ${SAVEFILE}
 
-for ERR in $(seq 0.01 0.01 0.05)
+for ERR in $(seq 0.01 0.01 0.01)
 do
 python eval_ssd.py --error_rate ${ERR} \
                    --percent_duplication ${NUM_DUP} \
@@ -80,7 +80,7 @@ python eval_ssd.py --error_rate ${ERR} \
 
 done
 
-# for ERR in $(seq 0.1 0.01 0.1)
+# for ERR in $(seq 0.01 0.01 0.05)
 # do
 # python eval_ssd.py --error_rate ${ERR} \
 #                    --percent_duplication ${NUM_DUP} \
