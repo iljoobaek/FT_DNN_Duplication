@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=0
-NUM_DUP=0.5
+NUM_DUP=0.2
 IDX=1
 # MODEL=models/attention3/ssd300_COCO_9.pth
 MODEL=models/vgg16-ssd-mp-0_7726.pth
